@@ -4,11 +4,11 @@ import { useState } from "react"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { Loader2, Mail, Lock, User, ArrowRight } from "lucide-react"
+import { Loader2, ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form } from "@/components/ui/form"
+import { NameField, EmailField, PasswordField } from "@/components/FormFields"
 
 interface AuthFormProps {
     type: "signin" | "signup"
@@ -93,82 +93,23 @@ const AuthForm = ({ type }: AuthFormProps) => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           {/* Name field - only for signup */}
           {type === "signup" && (
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Full Name</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        placeholder="John Doe" 
-                        className="pl-10 bg-background/50 border-border/50 focus:border-primary"
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
-                </FormItem>
-              )}
+            <NameField
+              form={form}
+              disabled={isLoading}
             />
           )}
           
           {/* Email field */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-foreground">Email Address</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="email" 
-                      placeholder="name@example.com" 
-                      className="pl-10 bg-background/50 border-border/50 focus:border-primary"
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage className="text-xs font-medium text-destructive" />
-              </FormItem>
-            )}
+          <EmailField
+            form={form}
+            disabled={isLoading}
           />
           
           {/* Password field */}
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="text-foreground">Password</FormLabel>
-                  {type === "signin" && (
-                    <span className="text-xs font-medium text-primary cursor-pointer hover:underline">
-                      Forgot password?
-                    </span>
-                  )}
-                </div>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      className="pl-10 bg-background/50 border-border/50 focus:border-primary"
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage className="text-xs font-medium text-destructive" />
-              </FormItem>
-            )}
+          <PasswordField
+            form={form}
+            disabled={isLoading}
+            showForgotPassword={type === "signin"}
           />
           
           {/* Error message */}
@@ -228,7 +169,3 @@ const AuthForm = ({ type }: AuthFormProps) => {
 }
 
 export default AuthForm
-
-
-
-      
