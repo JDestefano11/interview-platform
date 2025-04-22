@@ -33,26 +33,26 @@ export default function RootLayout({
               {/*Logo*/}
               <div className="flex items-center">
                 <Link href="/" className="flex-shrink-0 flex items-center"> 
-                  <Briefcase className="h-6 w-6 text-primary mr-2" />
-          <span className="text-xl font-bold text-white">PrepMaster</span>
-                  </Link>
+                  <Briefcase className="h-6 w-6 text-[var(--primary)] mr-2 drop-shadow-[0_0_8px_rgba(79,70,229,0.7)]" />
+                  <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] via-[var(--secondary)] to-[var(--accent)]">PrepMaster</span>
+                </Link>
               </div>
               {/*Auth Buttons */}
-        <div className="flex items-center space-x-3">
-                <Link href="/signin">
-                  <Button variant="default" size="sm" className="bg-[var(--auth-btn)] hover:bg-[var(--auth-btn-hover)] text-white cursor-pointer">
+              <div className="flex items-center space-x-3">
+                <Link href="/signin" className="no-underline">
+                  <Button variant="default" size="sm" className="bg-[var(--primary)] hover:bg-[var(--primary-light)] text-white cursor-pointer shadow-md hover:shadow-lg transition-all duration-300 border border-[rgba(255,255,255,0.08)]">
                     Login
                   </Button>
                 </Link>
-                <Link href="/signup">
-                  <Button variant="default" size="sm" className="bg-[var(--secondary)] hover:bg-[var(--secondary-dark)] text-white cursor-pointer">
+                <Link href="/signup" className="no-underline">
+                  <Button variant="default" size="sm" className="bg-[var(--secondary)] hover:bg-[var(--secondary-light)] text-white cursor-pointer shadow-md hover:shadow-lg transition-all duration-300 border border-[rgba(255,255,255,0.08)]">
                     Sign up
                   </Button>
                 </Link>
               </div>
             </div>
           </div>
-          </nav>
+        </nav>
         {children}
       </body>
     </html>
