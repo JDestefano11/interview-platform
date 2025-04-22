@@ -5,7 +5,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Loader2, ArrowRight } from "lucide-react"
-
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { NameField, EmailField, PasswordField } from "@/components/FormFields"
@@ -72,7 +72,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     <div className="px-8 py-10 sm:px-10 sm:py-12">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary-light to-accent">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-secondary via-secondary-light to-accent">
           {type === "signin" ? "Welcome Back" : "Create Account"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -109,7 +109,6 @@ const AuthForm = ({ type }: AuthFormProps) => {
           <PasswordField
             form={form}
             disabled={isLoading}
-            showForgotPassword={type === "signin"}
           />
           
           {/* Error message */}
@@ -122,7 +121,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
           {/* Submit button */}
           <Button 
             type="submit" 
-            className="w-full mt-6 bg-primary hover:bg-primary-dark text-white font-medium transition-all"
+            className="w-full mt-6 bg-[var(--auth-btn)] hover:bg-[var(--auth-btn-hover)] text-white font-medium transition-all"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -150,16 +149,16 @@ const AuthForm = ({ type }: AuthFormProps) => {
           {type === "signin" ? (
             <>
               Don't have an account?{" "}
-              <span className="font-medium text-primary cursor-pointer hover:underline">
+              <Link className="font-medium text-[var(--secondary-light)] cursor-pointer hover:underline" href="/signup">
                 Sign up
-              </span>
+            </Link>
             </>
           ) : (
             <>
-              Already have an account?{" "}
-              <span className="font-medium text-primary cursor-pointer hover:underline">
+                Already have an account?{" "}
+             <Link href="/signin" className="font-medium text-[var(--secondary-light)] cursor-pointer hover:underline">
                 Sign in
-              </span>
+             </Link>
             </>
           )}
         </p>

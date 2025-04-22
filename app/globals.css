@@ -2,33 +2,43 @@
 @import "tw-animate-css";
 
 :root {
-  /* Primary colors */
-  --primary: #3b82f6;
-  --primary-light: #60a5fa;
-  --primary-dark: #2563eb;
+  /* Primary colors - Deep blue */
+  --primary: #1e40af;
+  --primary-light: #2563eb;
+  --primary-dark: #1e3a8a;
 
-  /* Secondary colors */
-  --secondary: #10b981;
-  --secondary-light: #34d399;
-  --secondary-dark: #059669;
+  /* Secondary colors - Deep purple */
+  --secondary: #5b21b6;
+  --secondary-light: #7c3aed;
+  --secondary-dark: #4c1d95;
 
-  /* Accent color */
-  --accent: #8b5cf6;
-  --accent-light: #a78bfa;
-  --accent-dark: #7c3aed;
+  /* Accent color - Vibrant teal */
+  --accent: #0891b2;
+  --accent-light: #06b6d4;
+  --accent-dark: #0e7490;
 
-  /* Neutral colors */
-  --background: #0f172a;
-  --background-light: #1e293b;
-  --foreground: #f8fafc;
-  --muted: #64748b;
-  --muted-foreground: #cbd5e1;
+  /* Auth button color - Distinctive cyan */
+  --auth-btn: #0d9488;
+  --auth-btn-hover: #0f766e;
+
+  /* Neutral colors - Darker professional theme */
+  --background: #0a0f1a;
+  --background-light: #111827;
+  --foreground: #f1f5f9;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
 
   /* UI colors */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
+  --success: #059669;
+  --warning: #d97706;
+  --error: #dc2626;
+  --border: rgba(255, 255, 255, 0.08);
+  
+  /* Card and component colors */
+  --card: #111827;
+  --card-foreground: #f1f5f9;
+  --popover: #111827;
+  --popover-foreground: #f1f5f9;
 }
 
 /* Global styles */
@@ -40,12 +50,36 @@
 
   body {
     @apply text-[color:var(--foreground)];
-    background: linear-gradient(
-      135deg,
-      var(--background) 0%,
-      #1a1c2e 50%,
-      #1e1b3a 100%
-    );
+    background: 
+      /* Subtle noise texture for depth */
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"),
+      /* Secondary gradient - top right */
+      radial-gradient(
+        circle at 90% 10%,
+        rgba(91, 33, 182, 0.15) 0%,
+        transparent 60%
+      ),
+      /* Primary gradient - top left */
+      radial-gradient(
+        circle at 10% 10%,
+        rgba(30, 64, 175, 0.18) 0%,
+        transparent 60%
+      ),
+      /* Accent gradient - bottom */
+      radial-gradient(
+        circle at 50% 90%,
+        rgba(8, 145, 178, 0.12) 0%,
+        transparent 60%
+      ),
+      /* Base gradient - darker sophisticated blue */
+      linear-gradient(
+        135deg,
+        #050914 0%,
+        #0a0f1a 25%,
+        #0c1425 50%,
+        #0f1b33 75%,
+        #121f3d 100%
+      );
     background-attachment: fixed;
     @apply font-sans;
   }
@@ -55,27 +89,41 @@
 @layer components {
   .auth-layout {
     @apply min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden;
-    background: linear-gradient(
-      135deg,
-      rgba(15, 23, 42, 0.9) 0%,
-      rgba(30, 41, 59, 0.8) 50%,
-      rgba(30, 27, 58, 0.9) 100%
-    );
+    background: 
+      /* Subtle noise texture for depth */
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"),
+      /* Secondary gradient - top right */
+      radial-gradient(
+        circle at 90% 10%,
+        rgba(91, 33, 182, 0.15) 0%,
+        transparent 60%
+      ),
+      /* Primary gradient - top left */
+      radial-gradient(
+        circle at 10% 10%,
+        rgba(30, 64, 175, 0.18) 0%,
+        transparent 60%
+      ),
+      /* Accent gradient - bottom */
+      radial-gradient(
+        circle at 50% 90%,
+        rgba(8, 145, 178, 0.12) 0%,
+        transparent 60%
+      ),
+      /* Base gradient - darker sophisticated blue */
+      linear-gradient(
+        135deg,
+        #050914 0%,
+        #0a0f1a 25%,
+        #0c1425 50%,
+        #0f1b33 75%,
+        #121f3d 100%
+      );
   }
 
+  /* Remove the before pseudo-element since we've incorporated its effects into the main background */
   .auth-layout::before {
-    content: "";
-    @apply absolute inset-0 -z-10;
-    background: radial-gradient(
-        circle at 30% 70%,
-        rgba(139, 92, 246, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        circle at 70% 30%,
-        rgba(59, 130, 246, 0.1) 0%,
-        transparent 50%
-      );
+    content: none;
   }
 
   @screen sm {
@@ -98,14 +146,15 @@
 
   .auth-container {
     @apply w-full max-w-md mx-auto rounded-xl overflow-hidden transition-all duration-300;
-    background-color: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(12px);
+    background-color: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(16px);
     @apply border border-[color:var(--border)];
-    @apply shadow-[0_20px_25px_-5px_rgba(0,0,0,0.2),0_10px_10px_-5px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.05)];
+    @apply shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3),0_10px_10px_-5px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.05)];
   }
 
   .auth-container:hover {
-    @apply shadow-[0_25px_30px_-5px_rgba(0,0,0,0.2),0_15px_15px_-5px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.1)] -translate-y-0.5;
+    @apply shadow-[0_25px_30px_-5px_rgba(0,0,0,0.4),0_15px_15px_-5px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.07)] -translate-y-0.5;
+    background-color: rgba(17, 24, 39, 0.8);
   }
 
   /* Button styles */
