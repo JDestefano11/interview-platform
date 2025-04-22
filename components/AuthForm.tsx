@@ -1,0 +1,234 @@
+"use client"
+
+import { useState } from "react"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Loader2, Mail, Lock, User, ArrowRight } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+
+interface AuthFormProps {
+    type: "signin" | "signup"
+}
+
+const signInSchema = z.object({
+    email: z.string().email({ message: "Please enter a valid email address" }), 
+    password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
+})
+
+const signUpSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters long" }),
+    email: z.string().email({ message: "Please enter a valid email address" }), 
+    password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
+})
+
+// These lines use Zod's inference to create TypeScript types from our validation schemas.
+// SignInFormValues will have the type: { email: string; password: string; }
+// SignUpFormValues will have the type: { name: string; email: string; password: string; }
+// This ensures our form data types match exactly what our validation expects,
+// creating a single source of truth for both validation and TypeScript typing.
+type SignInFormValue = z.infer<typeof signInSchema>
+type SignUpFormValue = z.infer<typeof signUpSchema>
+
+const AuthForm = ({ type }: AuthFormProps) => {
+    // Set the initial state for form data and loading status
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Use the appropriate schema based on the form type (signin or signup)
+    const form = useForm<SignInFormValue | SignUpFormValue>({
+        resolver: zodResolver(type === "signin" ? signInSchema : signUpSchema),
+        defaultValues: type === "signin" ? { email: "", password: "" } : { name: "", email: "", password: "" },
+    })
+
+    // Handle form submission
+    const onSubmit = async (data: SignInFormValue | SignUpFormValue) => {
+        setIsLoading(true)
+        setError(null) 
+
+        // Will replace the api simulation with a real API call later
+        try {
+            // Simulate an API call with a timeout
+            await new Promise((resolve) => setTimeout(resolve, 2000)); 
+
+            if (type == "signin") {
+                console.log("Sign In Data:", data);
+            } else {
+                console.log("Signup Data:", data); 
+                // Redirect here
+                }
+        } catch { 
+            console.error("Error during form submission:", error);
+            setError("An error occurred. Please try again.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+  return (
+    <div className="px-8 py-10 sm:px-10 sm:py-12">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary-light to-accent">
+          {type === "signin" ? "Welcome Back" : "Create Account"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {type === "signin" 
+            ? "Sign in to continue to your account" 
+            : "Fill out the form to get started"}
+        </p>
+      </div>
+      
+      <div className="text-center mb-6">
+        <p className="text-xs uppercase text-muted-foreground tracking-wider">
+          {type === "signin" ? "sign in with email" : "create your account"}
+        </p>
+      </div>
+      
+      {/* Form */}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {/* Name field - only for signup */}
+          {type === "signup" && (
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Full Name</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="John Doe" 
+                        className="pl-10 bg-background/50 border-border/50 focus:border-primary"
+                        {...field} 
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium text-destructive" />
+                </FormItem>
+              )}
+            />
+          )}
+          
+          {/* Email field */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-foreground">Email Address</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      type="email" 
+                      placeholder="name@example.com" 
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary"
+                      {...field} 
+                      disabled={isLoading}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium text-destructive" />
+              </FormItem>
+            )}
+          />
+          
+          {/* Password field */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-foreground">Password</FormLabel>
+                  {type === "signin" && (
+                    <span className="text-xs font-medium text-primary cursor-pointer hover:underline">
+                      Forgot password?
+                    </span>
+                  )}
+                </div>
+                <FormControl>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary"
+                      {...field} 
+                      disabled={isLoading}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium text-destructive" />
+              </FormItem>
+            )}
+          />
+          
+          {/* Error message */}
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive text-center">
+              {error}
+            </div>
+          )}
+          
+          {/* Submit button */}
+          <Button 
+            type="submit" 
+            className="w-full mt-6 bg-primary hover:bg-primary-dark text-white font-medium transition-all"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>{type === "signin" ? "Signing in..." : "Creating account..."}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <span>{type === "signin" ? "Sign in" : "Create account"}</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </div>
+            )}
+          </Button>
+        </form>
+      </Form>
+      
+      {/* Footer */}
+      <div className="mt-6 text-center">
+        <p className="text-xs uppercase text-muted-foreground tracking-wider mb-4">
+          or
+        </p>
+        
+        <p className="text-sm text-muted-foreground">
+          {type === "signin" ? (
+            <>
+              Don't have an account?{" "}
+              <span className="font-medium text-primary cursor-pointer hover:underline">
+                Sign up
+              </span>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <span className="font-medium text-primary cursor-pointer hover:underline">
+                Sign in
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default AuthForm
+
+
+
+      
