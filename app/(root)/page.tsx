@@ -202,22 +202,14 @@ const HomePage = () => {
               
               {/* Enhanced CTA Buttons */}
               <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-5">
-                <Link href="/signup" className="no-underline">
-                  <button className="group relative flex items-center justify-center gap-2 w-full sm:w-auto px-7 py-3.5 rounded-lg bg-gradient-to-r from-[#4D4DFF] to-[#01CDFE] text-white font-medium transition-all duration-300 shadow-[0_0_25px_rgba(77,77,255,0.4)] hover:shadow-[0_0_35px_rgba(1,205,254,0.6)] overflow-hidden">
+                <Link href="/signup" className="no-underline w-full sm:w-auto">
+                  <button className="group relative flex items-center justify-center gap-2 w-full px-7 py-3.5 rounded-lg bg-gradient-to-r from-[#4D4DFF] to-[#01CDFE] text-white font-medium transition-all duration-300 shadow-[0_0_25px_rgba(77,77,255,0.4)] hover:shadow-[0_0_35px_rgba(1,205,254,0.6)] overflow-hidden cursor-pointer min-w-[160px]">
                     {/* Button glow effect */}
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#4D4DFF] to-[#01CDFE] opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500"></span>
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       Get Started Free
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </span>
-                  </button>
-                </Link>
-                
-                <Link href="/about" className="no-underline">
-                  <button className="group relative flex items-center justify-center gap-2 w-full sm:w-auto px-7 py-3.5 rounded-lg bg-[#1A2138]/30 backdrop-blur-sm text-[#E2F0FF] font-medium border border-[#4D4DFF]/30 transition-all duration-300 hover:border-[#01CDFE]/60 hover:bg-[#1A2138]/50 overflow-hidden shadow-[0_0_15px_rgba(77,77,255,0.1)] hover:shadow-[0_0_25px_rgba(1,205,254,0.2)]">
-                    {/* Button hover effect */}
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#1A2138]/0 to-[#1A2138]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                    <span className="relative z-10">Learn More</span>
                   </button>
                 </Link>
               </div>
