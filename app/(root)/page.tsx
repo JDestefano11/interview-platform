@@ -8,7 +8,6 @@ import robotAi from "../../public/XYVO (1).svg";
 import YourInterviews from '@/components/YourInterviews';
 import PickYourInterview from '@/components/PickYourInterview';
 import PerformanceTab from '@/components/PerformanceTab';
-import Footer from '@/components/Footer';
 
 // Mock data for interviews
 const mockUserInterviews = [
@@ -305,12 +304,8 @@ const HomePage = () => {
       {/* Pick Your Next Interview Section */}
       <PickYourInterview />
       
-     
       {/* Performance Tab */}
       <PerformanceTab />
-      
-      {/* Footer */}
-      <Footer />
     </main>
   );
 };
