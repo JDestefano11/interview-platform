@@ -3,8 +3,9 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BrainCircuit, Users, Award, TrendingUp, BarChart2, Briefcase, Clock, Star, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit } from 'lucide-react';
 import robotAi from "../../public/XYVO (1).svg";
+import YourInterviews from '@/components/YourInterviews';
 
 // Mock data for interviews
 const mockUserInterviews = [
@@ -294,6 +295,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      
+      {/* Your Interviews Section */}
+      <YourInterviews />
     </main>
   );
 };
