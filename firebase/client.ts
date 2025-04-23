@@ -5,13 +5,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB2qo6Ke5O3uJq2aOI1mfV6iGijVH4if50",
-  authDomain: "inellisense.firebaseapp.com",
-  projectId: "inellisense",
-  storageBucket: "inellisense.firebasestorage.app",
-  messagingSenderId: "918997348497",
-  appId: "1:918997348497:web:527f5b1586884c5d368f30",
-  measurementId: "G-5W52M2WV9Q",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
