@@ -14,6 +14,7 @@ const mockCompanyInterviews = [
     date: '2025-05-15',
     score: 94,
     status: 'available',
+    difficulty: 'Advanced',
     color: '#FF3864' // Neural Red
   },
   { 
@@ -24,6 +25,7 @@ const mockCompanyInterviews = [
     date: '2025-05-12',
     score: 89,
     status: 'available',
+    difficulty: 'Expert',
     color: '#9C42F5' // Violet Fusion
   },
   { 
@@ -34,6 +36,7 @@ const mockCompanyInterviews = [
     date: '2025-05-08',
     score: 91,
     status: 'available',
+    difficulty: 'Intermediate',
     color: '#00F6C5' // Bioluminescent Teal
   },
   { 
@@ -44,6 +47,7 @@ const mockCompanyInterviews = [
     date: '2025-05-03',
     score: 87,
     status: 'available',
+    difficulty: 'Beginner',
     color: '#FFC700' // Synapse Gold
   },
 ];
@@ -65,9 +69,9 @@ const InterviewCard = ({ interview }: { interview: any }) => (
         {/* Subtle top highlight */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#01CDFE]/30 to-transparent"></div>
         
-        {/* Technical label in top right with enhanced styling */}
+        {/* Difficulty label in top right with enhanced styling */}
         <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-medium bg-[#01CDFE]/10 backdrop-blur-md text-[#01CDFE] border border-[#01CDFE]/30 shadow-[0_0_10px_rgba(1,205,254,0.2)]">
-          Technical
+          {interview.difficulty}
         </div>
         
         {/* Card header with company info - minimal left padding */}
