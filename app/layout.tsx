@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Ace your next interview with IntelliView",
 };
 
+
+
 export default function RootLayout({
   children,
 }: {
@@ -20,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${monaSans.className} antialiased overflow-x-hidden p-0 m-0`}>
+      <body className={`${monaSans.className} antialiased overflow-x-hidden p-0 m-0`} suppressHydrationWarning>
         {/* Global background for the entire application */}
         <div className="fixed inset-0 -z-50">
           {/* Neural network nodes */}

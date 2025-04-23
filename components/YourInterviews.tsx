@@ -176,8 +176,8 @@ export default function YourInterviews() {
         <div className="absolute bottom-[40%] -right-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#4D4DFF]/20 to-transparent animate-data-flow-left" style={{animationDuration: '15s'}}></div>
         <div className="absolute top-[60%] -left-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#9C42F5]/20 to-transparent animate-data-flow-right" style={{animationDuration: '18s'}}></div>
         
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-[length:50px_50px] opacity-[0.03]"></div>
+        {/* Subtle background pattern - using gradient instead of SVG */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050A18] to-[#0E1428] opacity-[0.3]"></div>
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

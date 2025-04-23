@@ -9,6 +9,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { NameField, EmailField, PasswordField } from "@/components/FormFields"
+import { signupUser, signinUser } from "@/utilis/auth";
 
 interface AuthFormProps {
     type: "signin" | "signup"
@@ -44,33 +45,107 @@ const AuthForm = ({ type }: AuthFormProps) => {
         defaultValues: type === "signin" ? { email: "", password: "" } : { name: "", email: "", password: "" },
     })
 
-    // Handle form submission
     const onSubmit = async (data: SignInFormValue | SignUpFormValue) => {
-        setIsLoading(true)
-        setError(null) 
-
-        // Will replace the api simulation with a real API call later
-        try {
-            // Simulate an API call with a timeout
-            await new Promise((resolve) => setTimeout(resolve, 2000)); 
-
-            // Set authentication cookie
-            document.cookie = `auth-token=authenticated; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
-
-            if (type == "signin") {
-                console.log("Sign In Data:", data);
-                window.location.href = "/";
-            } else {
-                console.log("Signup Data:", data); 
-                window.location.href = "/";
-            }
-        } catch { 
-            console.error("Error during form submission:", error);
-            setError("An error occurred. Please try again.")
-        } finally {
-            setIsLoading(false)
+      // Prevent multiple submissions
+      if (isLoading) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      // Store form data in a variable to prevent isolation issues
+      const formData = { ...data };
+      
+      try {
+        if (type === "signup") {
+          // For signup, we need name, email, and password
+          const signupData = formData as SignUpFormValue;
+          
+          // Set a flag in localStorage to indicate we're in the process of signing up
+          // This helps the middleware know we're authenticated even if Firebase is slow
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('auth_in_progress', 'true');
+            } catch (e) {}
+          }
+          
+          const response = await signupUser({
+            name: signupData.name,
+            email: signupData.email,
+            password: signupData.password
+          });
+          
+          if (!response.success) {
+            setError(response.message);
+            return;
+          }
+          
+          console.log("User signed up successfully. UID:", response.uid);
+          
+          // Navigate with a delay and fallbacks
+          safeNavigate('/');
+        } else {
+          // For signin, we need email and password
+          const signinData = formData as SignInFormValue;
+          
+          // Set a flag in localStorage to indicate we're in the process of signing in
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('auth_in_progress', 'true');
+            } catch (e) {}
+          }
+          
+          const response = await signinUser({
+            email: signinData.email,
+            password: signinData.password
+          });
+          
+          if (!response.success) {
+            setError(response.message);
+            return;
+          }
+          
+          console.log("User signed in successfully. UID:", response.uid);
+          
+          // Navigate with a delay and fallbacks
+          safeNavigate('/');
         }
-    }
+      } catch (err: any) {
+        console.error("Error during form submission:", err);
+        setError(err.message || "An unexpected error occurred. Please try again.");
+        
+        // Clear any auth flags
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('auth_in_progress');
+          } catch (e) {}
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Safe navigation function with fallbacks
+    const safeNavigate = (path: string) => {
+      // Use a longer timeout to ensure Firebase operations complete
+      setTimeout(() => {
+        try {
+          // Try the standard navigation first
+          window.location.href = path;
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          
+          // If that fails, try location.replace
+          try {
+            window.location.replace(path);
+          } catch (replaceError) {
+            console.error('Replace navigation error:', replaceError);
+            
+            // Last resort - reload the page
+            window.location.reload();
+          }
+        }
+      }, 500); // Longer delay to ensure all operations complete
+    };
 
   return (
     <div className="px-8 py-10 sm:px-10 sm:py-12 relative">
