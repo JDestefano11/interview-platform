@@ -4,43 +4,47 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Clock, Star, CheckCircle2, Briefcase } from 'lucide-react';
 
-// Mock data for user's interviews
-const mockUserInterviews = [
+// Mock data for company interviews
+const mockCompanyInterviews = [
   { 
     id: 1, 
-    company: 'Google',
-    logo: '/mock/google.png', 
-    position: 'Senior Frontend Developer',
-    date: '2025-04-15',
-    score: 92,
-    status: 'completed'
+    company: 'Apple',
+    logo: '/mock/apple.png', 
+    position: 'iOS Developer',
+    date: '2025-05-15',
+    score: 94,
+    status: 'available',
+    color: '#FF3864' // Neural Red
   },
   { 
     id: 2, 
-    company: 'Microsoft',
-    logo: '/mock/microsoft.png', 
-    position: 'Full Stack Engineer',
-    date: '2025-04-10',
-    score: 85,
-    status: 'completed'
+    company: 'Netflix',
+    logo: '/mock/netflix.png', 
+    position: 'Senior Frontend Engineer',
+    date: '2025-05-12',
+    score: 89,
+    status: 'available',
+    color: '#9C42F5' // Violet Fusion
   },
   { 
     id: 3, 
-    company: 'Amazon',
-    logo: '/mock/amazon.png', 
-    position: 'React Developer',
-    date: '2025-04-05',
-    score: 78,
-    status: 'completed'
+    company: 'Spotify',
+    logo: '/mock/spotify.png', 
+    position: 'Full Stack Developer',
+    date: '2025-05-08',
+    score: 91,
+    status: 'available',
+    color: '#00F6C5' // Bioluminescent Teal
   },
   { 
     id: 4, 
-    company: 'Meta',
-    logo: '/mock/meta.png', 
-    position: 'UI Engineer',
-    date: '2025-03-28',
-    score: 88,
-    status: 'completed'
+    company: 'Tesla',
+    logo: '/mock/tesla.png', 
+    position: 'Software Engineer',
+    date: '2025-05-03',
+    score: 87,
+    status: 'available',
+    color: '#FFC700' // Synapse Gold
   },
 ];
 
@@ -143,13 +147,13 @@ const InterviewCard = ({ interview }: { interview: any }) => (
         
         {/* Card footer with action button moved down */}
         <div className="px-6 xl:px-7 pb-6 xl:pb-7 mt-auto">
-          <button className="group/btn relative w-full bg-gradient-to-r from-[#4D4DFF]/90 to-[#01CDFE]/90 text-white px-5 py-2.5 xl:py-3 rounded-lg text-sm xl:text-base font-medium shadow-[0_0_15px_rgba(1,205,254,0.2)] hover:shadow-[0_0_25px_rgba(1,205,254,0.4)] transition-all duration-300 overflow-hidden">
+          <button className="group/btn relative w-full bg-gradient-to-r from-[#9C42F5]/90 to-[#2DE2E6]/90 text-white px-5 py-2.5 xl:py-3 rounded-lg text-sm xl:text-base font-medium shadow-[0_0_15px_rgba(45,226,230,0.2)] hover:shadow-[0_0_25px_rgba(45,226,230,0.4)] transition-all duration-300 overflow-hidden">
             {/* Button glow effect */}
-            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#4D4DFF] to-[#01CDFE] opacity-0 group-hover/btn:opacity-100 blur-xl transition-opacity duration-500"></span>
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#9C42F5] to-[#2DE2E6] opacity-0 group-hover/btn:opacity-100 blur-xl transition-opacity duration-500"></span>
             
             {/* Button content */}
             <span className="relative z-10 flex items-center justify-center gap-2">
-            View Interview
+        Start Interview
               <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
             </span>
           </button>
@@ -159,22 +163,22 @@ const InterviewCard = ({ interview }: { interview: any }) => (
   </div>
 );
 
-export default function YourInterviews() {
+export default function PickYourInterview() {
   return (
     <section className="relative py-16">
       {/* Enhanced background elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         {/* Neural network nodes with improved glow */}
-        <div className="absolute top-[10%] right-[5%] w-2 h-2 bg-[#01CDFE] rounded-full shadow-[0_0_15px_rgba(1,205,254,0.6)] animate-pulse"></div>
+        <div className="absolute top-[10%] right-[5%] w-2 h-2 bg-[#2DE2E6] rounded-full shadow-[0_0_15px_rgba(45,226,230,0.6)] animate-pulse"></div>
         <div className="absolute top-[70%] left-[8%] w-1.5 h-1.5 bg-[#9C42F5] rounded-full shadow-[0_0_12px_rgba(156,66,245,0.6)] animate-pulse-delay"></div>
         <div className="absolute bottom-[20%] right-[15%] w-1.5 h-1.5 bg-[#00F6C5] rounded-full shadow-[0_0_12px_rgba(0,246,197,0.6)] animate-pulse-slow"></div>
         <div className="absolute top-[40%] left-[20%] w-1 h-1 bg-[#FFC700] rounded-full shadow-[0_0_10px_rgba(255,199,0,0.6)] animate-pulse-slow"></div>
         <div className="absolute bottom-[60%] right-[25%] w-1 h-1 bg-[#FF3864] rounded-full shadow-[0_0_10px_rgba(255,56,100,0.6)] animate-pulse"></div>
         
         {/* Data flow lines with enhanced animations */}
-        <div className="absolute top-[30%] -left-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#01CDFE]/20 to-transparent animate-data-flow-right" style={{animationDuration: '12s'}}></div>
-        <div className="absolute bottom-[40%] -right-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#4D4DFF]/20 to-transparent animate-data-flow-left" style={{animationDuration: '15s'}}></div>
-        <div className="absolute top-[60%] -left-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#9C42F5]/20 to-transparent animate-data-flow-right" style={{animationDuration: '18s'}}></div>
+        <div className="absolute top-[30%] -left-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#2DE2E6]/20 to-transparent animate-data-flow-right" style={{animationDuration: '12s'}}></div>
+        <div className="absolute bottom-[40%] -right-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#9C42F5]/20 to-transparent animate-data-flow-left" style={{animationDuration: '15s'}}></div>
+        <div className="absolute top-[60%] -left-40 w-120 h-[1px] bg-gradient-to-r from-transparent via-[#FF3864]/20 to-transparent animate-data-flow-right" style={{animationDuration: '18s'}}></div>
         
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-[length:50px_50px] opacity-[0.03]"></div>
@@ -186,21 +190,21 @@ export default function YourInterviews() {
           <div className="mb-4 sm:mb-0">
             <div className="flex flex-col">
               <h2 className="text-2xl sm:text-3xl font-semibold text-[#E2F0FF] tracking-tight mb-1">
-                Your Recent Interviews
+                Pick Your Next Interview
               </h2>
-              <p className="text-[#8BA3C7] text-sm">Continue where you left off or review your past performance</p>
+              <p className="text-[#8BA3C7] text-sm">Practice with top companies and prepare for your dream role</p>
             </div>
           </div>
           
-          <div className="flex items-center px-4 py-2 rounded-full bg-[#1A2138]/60 backdrop-blur-sm border border-[#4D4DFF]/20 text-[#8BA3C7] text-sm shadow-[0_0_15px_rgba(1,205,254,0.1)]">
-            <CheckCircle2 className="w-4 h-4 mr-2 text-[#01CDFE]" />
-            <span>Based on your profile</span>
+          <div className="flex items-center px-4 py-2 rounded-full bg-[#1A2138]/60 backdrop-blur-sm border border-[#9C42F5]/20 text-[#8BA3C7] text-sm shadow-[0_0_15px_rgba(156,66,245,0.1)]">
+            <CheckCircle2 className="w-4 h-4 mr-2 text-[#9C42F5]" />
+            <span>Trending interviews</span>
           </div>
         </div>
         
         {/* Card grid with slightly wider cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-8 xl:gap-10 2xl:gap-12">
-          {mockUserInterviews.map((interview) => (
+          {mockCompanyInterviews.map((interview) => (
             <div key={interview.id} className="xl:scale-105 2xl:scale-110 transform transition-transform duration-300 origin-center">
               <InterviewCard interview={interview} />
             </div>
