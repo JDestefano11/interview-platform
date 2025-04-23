@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Briefcase } from 'lucide-react';
+import { logout } from '@/utilis/auth';
 
 export default function ScrollNavbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +24,14 @@ export default function ScrollNavbar() {
     
     // Initial check
     handleScroll();
+    
+    // Check authentication status
+    const checkAuth = () => {
+      const hasAuthCookie = document.cookie.includes('auth-token');
+      setIsAuthenticated(hasAuthCookie);
+    };
+    
+    checkAuth();
     
     // Clean up event listener
     return () => {
@@ -48,16 +58,14 @@ export default function ScrollNavbar() {
           </div>
           {/*Auth Buttons*/}
           <div className="flex items-center space-x-4">
-            <Link href="/signin" className="no-underline">
-              <Button variant="default" size="sm" className="bg-[#1A2138]/30 text-[#E2F0FF] cursor-pointer shadow-[0_0_20px_rgba(77,77,255,0.15)] hover:shadow-[0_0_25px_rgba(77,77,255,0.25)] transition-all duration-300 border border-[#4D4DFF]/30 hover:border-[#4D4DFF]/50 px-5 py-2">
-                Login
-              </Button>
-            </Link>
-            <Link href="/signup" className="no-underline">
-              <Button variant="default" size="sm" className="bg-gradient-to-r from-[#4D4DFF]/80 to-[#01CDFE]/80 hover:from-[#4D4DFF]/90 hover:to-[#01CDFE]/90 text-white cursor-pointer shadow-[0_0_20px_rgba(1,205,254,0.2)] hover:shadow-[0_0_30px_rgba(1,205,254,0.3)] transition-all duration-300 border-none px-5 py-2">
-                Sign up
-              </Button>
-            </Link>
+            {isAuthenticated && (
+              <button 
+                onClick={logout}
+                className="text-sm font-medium text-[#01CDFE] hover:text-[#01CDFE]/80 transition-colors cursor-pointer bg-[#1A2138]/30 shadow-[0_0_20px_rgba(77,77,255,0.15)] hover:shadow-[0_0_25px_rgba(77,77,255,0.25)] transition-all duration-300 border border-[#4D4DFF]/30 hover:border-[#4D4DFF]/50 px-5 py-2 rounded-md"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </div>

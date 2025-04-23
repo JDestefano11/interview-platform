@@ -54,12 +54,16 @@ const AuthForm = ({ type }: AuthFormProps) => {
             // Simulate an API call with a timeout
             await new Promise((resolve) => setTimeout(resolve, 2000)); 
 
+            // Set authentication cookie
+            document.cookie = `auth-token=authenticated; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+
             if (type == "signin") {
                 console.log("Sign In Data:", data);
+                window.location.href = "/";
             } else {
                 console.log("Signup Data:", data); 
-                // Redirect here
-                }
+                window.location.href = "/";
+            }
         } catch { 
             console.error("Error during form submission:", error);
             setError("An error occurred. Please try again.")
