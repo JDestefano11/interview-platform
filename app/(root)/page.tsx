@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, BrainCircuit, Users, Award, TrendingUp, BarChart2, Briefcase, Clock, Star, CheckCircle2 } from 'lucide-react';
-import robotAi from "../../public/Hero.svg";
+import robotAi from "../../public/XYVO (1).svg";
 
 // Mock data for interviews
 const mockUserInterviews = [
@@ -97,7 +97,7 @@ const HomePage = () => {
     <main className="min-h-screen relative">
       
       {/* Hero Section - completely integrated with no visual separation */}
-      <section className="pt-4 sm:pt-6 md:pt-8 pb-12 sm:pb-16 md:pb-20 lg:pb-24 px-4 sm:px-6 lg:px-8 relative overflow-visible border-none shadow-none outline-none">
+      <section className="pt-28 sm:pt-32 md:pt-36 pb-12 sm:pb-16 md:pb-20 lg:pb-24 px-4 sm:px-6 lg:px-8 relative overflow-visible border-none shadow-none outline-none">
         {/* Ensure no lines or borders appear */}
         <div className="absolute inset-0 -z-10 bg-transparent"></div>
         
@@ -216,7 +216,7 @@ const HomePage = () => {
             </div>
             
             {/* Right Column - AI Assistant Image with advanced tech backdrop */}
-            <div className="hidden lg:block relative -mt-12 -ml-16 sm:-ml-20 md:-ml-24">
+            <div className="hidden lg:block relative">
               {/* Enhanced multi-layered background that blends with the page */}
               <div className="absolute inset-0 bg-gradient-to-tr from-[#4D4DFF]/25 via-[#9C42F5]/20 to-[#01CDFE]/25 rounded-3xl blur-3xl opacity-90"></div>
               <div className="absolute inset-0 bg-gradient-to-br from-[#01CDFE]/15 via-transparent to-[#9C42F5]/20 rounded-3xl blur-2xl opacity-80"></div>
@@ -278,13 +278,13 @@ const HomePage = () => {
               {/* Main AI assistant image with enhanced glow */}
               <div className="relative flex items-center w-full h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-[#4D4DFF]/20 via-[#9C42F5]/25 to-[#01CDFE]/20 rounded-3xl blur-3xl opacity-80 animate-pulse-slow"></div>
-                <div className="relative z-10 -ml-24 sm:-ml-32 md:-ml-40 overflow-visible">
+                <div className="relative z-10 overflow-visible flex items-center justify-center">
                   <Image
                     src={robotAi}
                     alt="AI Interview Assistant"
-                    width={900}
-                    height={800}
-                    className="w-[500px] h-[500px] sm:w-[600px] sm:h-[600px] md:w-[700px] md:h-[700px] lg:w-[800px] lg:h-[800px] xl:w-[900px] xl:h-[900px] object-contain drop-shadow-[0_0_40px_rgba(1,205,254,0.5)] transform scale-125 sm:scale-150"
+                    width={500}
+                    height={500}
+                    className="w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px] lg:w-[450px] lg:h-[450px] xl:w-[500px] xl:h-[500px] object-contain drop-shadow-[0_0_40px_rgba(1,205,254,0.5)] transform translate-x-4 sm:translate-x-8 md:translate-x-0 lg:translate-x-0"
                   />
                 </div>
               </div>
