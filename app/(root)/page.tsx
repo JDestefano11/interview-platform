@@ -5,8 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, BrainCircuit } from 'lucide-react';
 import robotAi from "../../public/XYVO (1).svg";
-import YourInterviews from '@/components/YourInterviews';
-import PickYourInterview from '@/components/PickYourInterview';
 import PerformanceTab from '@/components/PerformanceTab';
 
 // Mock data for interviews
@@ -298,11 +296,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* Your Interviews Section */}
-      <YourInterviews />
-      
-      {/* Pick Your Next Interview Section */}
-      <PickYourInterview />
+ 
       
       {/* Performance Tab */}
       <PerformanceTab />
