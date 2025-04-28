@@ -208,7 +208,7 @@ const HomePage = () => {
                     {/* Button glow effect */}
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#4D4DFF] to-[#01CDFE] opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500"></span>
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      Get Started Free
+                      Choose Your Interview
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </span>
                   </button>
