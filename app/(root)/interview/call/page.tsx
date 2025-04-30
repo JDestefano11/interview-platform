@@ -251,215 +251,227 @@ export default function InterviewCallPage() {
   
   return (
     <div className="min-h-screen bg-[#0A101F] text-white flex flex-col">
-      {/* Header with minimal controls */}
-      <header className="p-4 flex items-center justify-between bg-[#0E1428] border-b border-[#1A2138]">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/interview/setup')}
-          className="text-[#8BA3C7] hover:text-white hover:bg-[#1A2138]"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        
-        <div className="flex items-center">
-          {isCallActive && (
-            <div className="bg-[#1A2138] px-3 py-1 rounded-full flex items-center">
-              <div className="w-2 h-2 rounded-full bg-[#FF3864] mr-2 animate-pulse"></div>
-              <span className="text-sm font-medium">{formatTime(timeElapsed)}</span>
-            </div>
-          )}
-        </div>
-        
-        <div>
-          {/* Empty div to maintain spacing */}
+      {/* Header with improved centered layout */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#0E1428]/95 via-[#1A2138]/95 to-[#0E1428]/95 backdrop-blur-md border-b border-[#2A3A64]/30 shadow-lg py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+          <div className="flex items-center w-1/3">
+            <Button 
+              variant="ghost" 
+              className="text-[#8BA3C7] hover:text-white hover:bg-[#1A2138]/50 transition-all duration-200 group"
+              onClick={() => router.push('/interview/setup')}
+            >
+              <ArrowLeft className="w-5 h-5 mr-2 group-hover:translate-x-[-2px] transition-transform duration-200" />
+              <span className="font-medium">Back</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-center w-1/3">
+            <div className="text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] font-bold text-xl">Interview</div>
+          </div>
+          
+          <div className="flex items-center justify-end w-1/3">
+            {isCallActive && (
+              <div className="bg-[#1A2138] px-3 py-1 rounded-full flex items-center">
+                <div className="w-2 h-2 rounded-full bg-[#FF3864] mr-2 animate-pulse"></div>
+                <span className="text-sm font-medium">{formatTime(timeElapsed)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       
-      <main className="flex-1 flex flex-col p-4 w-full relative overflow-hidden">
-        {/* Split screen video call layout */}
-        <div className="flex-1 flex flex-col md:flex-row gap-4 h-full">
-          {/* AI Interviewer side */}
-          <div className="flex-1 min-h-[40vh] md:min-h-[60vh] relative">
-            {/* AI Interviewer video placeholder */}
-            <div 
-              ref={videoRef}
-              className={cn(
-                "relative w-full h-full rounded-xl overflow-hidden bg-[#1A2138] border border-[#2A3A64] shadow-lg flex items-center justify-center",
-                isCallActive ? "" : "opacity-80"
-              )}
-            >
-              {/* Interviewer avatar */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-28 h-28 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center shadow-[0_0_30px_rgba(1,205,254,0.3)]">
-                  <User className="h-14 w-14 text-white" />
-                </div>
-              </div>
-              
-              {/* Interviewer name label */}
-              <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center">
-                <div className="w-2 h-2 rounded-full bg-[#01CDFE] mr-2 animate-pulse"></div>
-                <span className="text-white font-medium">AI Interviewer</span>
-              </div>
-              
-              {/* Current question overlay - only shown when call is active */}
-              {isCallActive && currentQuestion && !showInterviewerResponse && (
-                <div className="absolute top-4 left-4 right-4 bg-black/60 backdrop-blur-sm p-3 rounded-lg border border-[#2A3A64]/50">
-                  <div className="flex items-center mb-1">
-                    <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
-                      {questionNumber}
-                    </div>
-                    <div className="ml-2 text-xs text-[#8BA3C7]">Question {questionNumber} of {totalQuestions}</div>
-                  </div>
-                  <p className="text-white text-sm md:text-base">{currentQuestion.question}</p>
-                </div>
-              )}
-              
-              {/* Interviewer response overlay */}
-              {showInterviewerResponse && (
-                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6">
-                  <div className="bg-[#1A2138]/80 rounded-lg p-5 max-w-xl border border-[#2A3A64] shadow-lg">
-                    <div className="flex items-center mb-3">
-                      <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">
-                        AI
-                      </div>
-                      <div className="ml-2 text-sm text-[#8BA3C7]">AI Interviewer</div>
-                    </div>
-                    <p className="text-white text-lg">{interviewerResponse}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* User side */}
-          <div className="flex-1 min-h-[40vh] md:min-h-[60vh] relative">
-            {/* User video placeholder */}
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-[#0E1428] border border-[#1A2138] shadow-lg flex items-center justify-center">
-              {/* User avatar/silhouette */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-28 h-28 rounded-full bg-gradient-to-r from-[#2A3A64] to-[#4A5578] flex items-center justify-center">
-                  <User className="h-14 w-14 text-[#8BA3C7]" />
-                </div>
-              </div>
-              
-              {/* User name label */}
-              <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center">
-                <span className="text-white font-medium">You</span>
-              </div>
-              
-              {/* Muted indicator when mic is off */}
-              {!isMicOn && isCallActive && (
-                <div className="absolute top-4 right-4 bg-[#FF3864]/80 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center">
-                  <MicOff className="h-4 w-4 text-white mr-1" />
-                  <span className="text-white text-xs">Muted</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      <main className="flex-1 flex flex-col p-4 pt-20 w-full relative overflow-hidden">
         
-        {/* Call controls - only visible when call is active */}
+        {/* Call controls placeholder - controls moved to the bottom of the video panel */}
+        
+        {/* Redesigned interview layout with transcript */}
         {isCallActive && (
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn(
-                "rounded-full w-12 h-12 border-2", 
-                isMicOn ? "bg-[#1A2138] border-[#01CDFE] text-[#01CDFE]" : "bg-[#FF3864] border-[#FF3864] text-white"
-              )}
-              onClick={() => setIsMicOn(!isMicOn)}
-            >
-              {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn(
-                "rounded-full w-12 h-12 border-2", 
-                isVideoOn ? "bg-[#1A2138] border-[#01CDFE] text-[#01CDFE]" : "bg-[#FF3864] border-[#FF3864] text-white"
-              )}
-              onClick={() => setIsVideoOn(!isVideoOn)}
-            >
-              {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full w-12 h-12 border-2 bg-[#FF3864] border-[#FF3864] text-white hover:bg-[#FF3864]/80"
-              onClick={endCall}
-            >
-              <Phone className="h-5 w-5 rotate-135" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn(
-                "rounded-full w-12 h-12 border-2", 
-                isChatOpen ? "bg-[#01CDFE] border-[#01CDFE] text-white" : "bg-[#1A2138] border-[#2A3A64] text-[#8BA3C7] hover:border-[#01CDFE] hover:text-[#01CDFE]"
-              )}
-              onClick={() => setIsChatOpen(!isChatOpen)}
-            >
-              <MessageSquare className="h-5 w-5" />
-            </Button>
-          </div>
-        )}
-        
-        {/* Chat/response panel - only shown when chat is open */}
-        {isCallActive && isChatOpen && (
-          <div className="mt-4 w-full bg-[#0E1428] border border-[#1A2138] rounded-xl shadow-lg flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-[#1A2138] flex items-center justify-between">
-              <h3 className="text-[#E2F0FF] font-medium">Interview Chat</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#8BA3C7] hover:text-white hover:bg-[#1A2138] h-8 w-8"
-                onClick={() => setIsChatOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 max-h-[300px]">
-              {/* Chat history */}
-              <div className="bg-[#1A2138]/50 p-3 rounded-lg">
-                <p className="text-[#8BA3C7] text-xs mb-1">AI Interviewer</p>
-                <p className="text-white text-sm">Welcome to your interview. I'll be asking you questions about {interviewType}.</p>
-              </div>
-              
-              {Object.entries(responses).map(([questionIdx, response]) => (
-                <div key={questionIdx} className="space-y-3">
-                  <div className="bg-[#1A2138]/50 p-3 rounded-lg">
-                    <p className="text-[#8BA3C7] text-xs mb-1">AI Interviewer</p>
-                    <p className="text-white text-sm">{questions[parseInt(questionIdx)]?.question}</p>
-                  </div>
-                  <div className="bg-[#01CDFE]/10 p-3 rounded-lg ml-4">
-                    <p className="text-[#8BA3C7] text-xs mb-1">You</p>
-                    <p className="text-white text-sm">{response}</p>
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left column - Video call interface */}
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              {/* Video panels */}
+              <div className="flex flex-col gap-4 h-full">
+                {/* AI Interviewer side */}
+                <div className="min-h-[35vh] relative">
+                  <div 
+                    ref={videoRef}
+                    className={cn(
+                      "relative w-full h-full rounded-xl overflow-hidden bg-[#1A2138] border border-[#2A3A64] shadow-lg flex items-center justify-center",
+                      isCallActive ? "" : "opacity-80"
+                    )}
+                  >
+                    {/* Enhanced AI Interviewer avatar */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative w-48 h-48 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center shadow-[0_0_40px_rgba(1,205,254,0.4)]">
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          <div className="absolute inset-0 bg-[#1A2138] opacity-30"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-28 w-28 text-white opacity-80">
+                              <path d="M12 2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8Z" />
+                              <path d="M20 2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8Z" />
+                              <path d="M20 16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16Z" />
+                              <path d="M6 8v8" />
+                              <path d="M18 8v8" />
+                              <circle cx="12" cy="12" r="2" />
+                              <path d="M10 16.5V17a2 2 0 1 0 4 0v-.5" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 rounded-full border-2 border-white/20"></div>
+                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#01CDFE] flex items-center justify-center shadow-lg">
+                          <div className="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Interviewer name label */}
+                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center">
+                      <div className="w-2 h-2 rounded-full bg-[#01CDFE] mr-2 animate-pulse"></div>
+                      <span className="text-white font-medium">AI Interviewer</span>
+                    </div>
+                    
+                    {/* Interviewer response overlay */}
+                    {showInterviewerResponse && (
+                      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6">
+                        <div className="bg-[#1A2138]/80 rounded-lg p-5 max-w-xl border border-[#2A3A64] shadow-lg">
+                          <div className="flex items-center mb-3">
+                            <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">
+                              AI
+                            </div>
+                            <div className="ml-2 text-sm text-[#8BA3C7]">AI Interviewer</div>
+                          </div>
+                          <p className="text-white text-lg">{interviewerResponse}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+                
+                {/* User side */}
+                <div className="min-h-[35vh] relative">
+                  <div className="relative w-full h-full rounded-xl overflow-hidden bg-[#0E1428] border border-[#1A2138] shadow-lg flex items-center justify-center">
+                    {/* Enhanced User avatar */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative w-48 h-48 rounded-full bg-gradient-to-r from-[#2A3A64] to-[#4A5578] flex items-center justify-center shadow-[0_0_30px_rgba(42,58,100,0.4)]">
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          <div className="absolute inset-0 bg-[#0E1428] opacity-30"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-28 w-28 text-[#8BA3C7] opacity-80">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 rounded-full border-2 border-white/10"></div>
+                      </div>
+                    </div>
+                    
+                    {/* User name label */}
+                    <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center">
+                      <span className="text-white font-medium">You</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* End call button */}
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full w-14 h-14 border-2 bg-[#FF3864] border-[#FF3864] text-white hover:bg-[#FF3864]/80 shadow-[0_0_15px_rgba(255,56,100,0.3)]"
+                  onClick={endCall}
+                >
+                  <Phone className="h-6 w-6 rotate-135" />
+                </Button>
+              </div>
             </div>
             
-            <div className="p-3 border-t border-[#1A2138]">
-              <div className="relative">
-                <textarea
-                  value={userResponse}
-                  onChange={(e) => setUserResponse(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className="w-full bg-[#1A2138] border border-[#2A3A64] rounded-lg p-3 pr-12 text-white placeholder-[#4A5578] min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#01CDFE]/50 text-sm"
-                />
-                <Button
-                  onClick={submitResponse}
-                  disabled={!userResponse.trim() || isLoading}
-                  className="absolute bottom-3 right-3 bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white rounded-full p-2 hover:opacity-90"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+            {/* Right column - Transcript panel */}
+            <div className="lg:col-span-1 bg-gradient-to-b from-[#0E1428]/90 to-[#1A2138]/90 border border-[#2A3A64]/50 rounded-xl shadow-lg overflow-hidden h-[600px] flex flex-col">
+              <div className="p-4 border-b border-[#2A3A64]/50 bg-[#1A2138]/50 backdrop-blur-sm">
+                <h3 className="text-lg font-medium text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5]">Interview Transcript</h3>
+                <p className="text-[#8BA3C7] text-xs">Question {questionNumber} of {totalQuestions}</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {/* Welcome message */}
+                <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30">
+                  <div className="flex items-center mb-2">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
+                      <span className="text-white text-xs font-bold">AI</span>
+                    </div>
+                    <p className="text-[#8BA3C7] text-xs">AI Interviewer</p>
+                  </div>
+                  <p className="text-white text-sm">Welcome to your interview. I'll be asking you questions about {interviewType}.</p>
+                </div>
+                
+                {/* Question and answer pairs */}
+                {Object.entries(responses).map(([questionIdx, response]) => (
+                  <div key={questionIdx} className="space-y-3">
+                    <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30">
+                      <div className="flex items-center mb-2">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
+                          <span className="text-white text-xs font-bold">AI</span>
+                        </div>
+                        <p className="text-[#8BA3C7] text-xs">Question {parseInt(questionIdx) + 1}</p>
+                      </div>
+                      <p className="text-white text-sm">{questions[parseInt(questionIdx)]?.question}</p>
+                    </div>
+                    <div className="bg-[#01CDFE]/10 p-3 rounded-lg border border-[#01CDFE]/20 ml-4">
+                      <div className="flex items-center mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#1A2138] border border-[#2A3A64] flex items-center justify-center mr-2">
+                          <span className="text-[#8BA3C7] text-xs font-bold">You</span>
+                        </div>
+                        <p className="text-[#8BA3C7] text-xs">Your Response</p>
+                      </div>
+                      <p className="text-white text-sm">{response}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Current question indicator if no response yet */}
+                {currentQuestion && !responses[questionNumber - 1] && (
+                  <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30 relative">
+                    <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#01CDFE] to-[#9C42F5] rounded-full"></div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
+                        <span className="text-white text-xs font-bold">AI</span>
+                      </div>
+                      <p className="text-[#8BA3C7] text-xs">Current Question</p>
+                    </div>
+                    <p className="text-white text-sm">{currentQuestion.question}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Voice input status area */}
+              <div className="p-4 border-t border-[#2A3A64]/50 bg-[#1A2138]/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-[#01CDFE] mr-2 animate-pulse"></div>
+                    <span className="text-[#8BA3C7] text-sm">Voice input active</span>
+                  </div>
+                  
+                  {/* Voice status indicator */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="w-1 h-3 bg-[#01CDFE] rounded-full animate-pulse"
+                          style={{ animationDelay: `${i * 0.15}s`, height: `${Math.max(3, Math.random() * 12)}px` }}
+                        ></div>
+                      ))}
+                    </div>
+                    <Button
+                      onClick={submitResponse}
+                      className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white rounded-full p-2 hover:opacity-90 shadow-[0_0_10px_rgba(1,205,254,0.3)]"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -142,31 +142,26 @@ export default function InterviewSetupPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#050A18] bg-gradient-to-b from-[#050A18] to-[#0A1228]">
       {/* Enhanced Navbar */}
-      <nav className="bg-gradient-to-r from-[#0E1428]/95 to-[#0A1228]/95 backdrop-blur-lg shadow-xl border-b border-[#01CDFE]/50 fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          {/* Decorative elements */}
-          <div className="absolute top-0 left-1/4 w-32 h-1 bg-gradient-to-r from-[#4D4DFF] to-transparent rounded-b-full blur-[1px] opacity-60"></div>
-          <div className="absolute top-0 right-1/4 w-24 h-1 bg-gradient-to-l from-[#01CDFE] to-transparent rounded-b-full blur-[1px] opacity-60"></div>
-          
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="mr-4 text-[#01CDFE] hover:text-[#01CDFE] hover:bg-[#1A2138]/50"
-                asChild
-              >
-                <a href="/">
-                  <ArrowLeft size={20} />
-                </a>
-              </Button>
-              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5]">
-                Interview Setup
-              </h1>
-            </div>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#0E1428]/95 via-[#1A2138]/95 to-[#0E1428]/95 backdrop-blur-md border-b border-[#2A3A64]/30 shadow-lg py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+          <div className="flex items-center w-1/3">
+            <Button 
+              variant="ghost" 
+              className="text-[#8BA3C7] hover:text-white hover:bg-[#1A2138]/50 transition-all duration-200 group"
+              onClick={() => router.push("/")}
+            >
+              <ArrowLeft className="w-5 h-5 mr-2 group-hover:translate-x-[-2px] transition-transform duration-200" />
+              <span className="font-medium">Back</span>
+            </Button>
           </div>
+          
+          <div className="flex items-center justify-center w-1/3">
+            <div className="text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] font-bold text-xl">Interview Setup</div>
+          </div>
+          
+          <div className="w-1/3"></div>
         </div>
-      </nav>
+      </header>
       
       {/* Main Content */}
       <main className="flex-1 pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
