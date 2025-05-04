@@ -5,949 +5,108 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Phone, Mic, MicOff, Video, VideoOff, MessageSquare, User, X, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
-// Define interview question type
-interface InterviewQuestion {
-  id: number;
-  question: string;
-  type: string;
-}
-
-// Sample interview questions by type
-const sampleQuestions: Record<string, InterviewQuestion[]> = {
-  "Frontend Developer": [
-    { id: 1, question: "Explain the difference between flexbox and grid in CSS.", type: "technical" },
-    { id: 2, question: "How do you optimize website performance?", type: "technical" },
-    { id: 3, question: "Explain your approach to responsive design.", type: "technical" },
-    { id: 4, question: "What's your experience with modern JavaScript frameworks?", type: "experience" },
-    { id: 5, question: "Describe a challenging project you worked on and how you solved the problems.", type: "behavioral" }
-  ],
-  "Backend Developer": [
-    { id: 1, question: "Explain RESTful API design principles.", type: "technical" },
-    { id: 2, question: "How do you handle database optimization?", type: "technical" },
-    { id: 3, question: "Describe your experience with server-side caching.", type: "experience" },
-    { id: 4, question: "How do you approach API security?", type: "technical" },
-    { id: 5, question: "Tell me about a time you had to refactor a complex backend system.", type: "behavioral" }
-  ],
-  "Full Stack Developer": [
-    { id: 1, question: "How do you manage state between frontend and backend?", type: "technical" },
-    { id: 2, question: "Explain your experience with full-stack debugging.", type: "experience" },
-    { id: 3, question: "How do you decide which tasks should be handled by frontend vs backend?", type: "technical" },
-    { id: 4, question: "Describe your experience with deployment pipelines.", type: "experience" },
-    { id: 5, question: "Tell me about a full-stack project you're particularly proud of.", type: "behavioral" }
-  ],
-  "DevOps Engineer": [
-    { id: 1, question: "Explain your experience with CI/CD pipelines.", type: "experience" },
-    { id: 2, question: "How do you approach infrastructure as code?", type: "technical" },
-    { id: 3, question: "Describe your experience with container orchestration.", type: "experience" },
-    { id: 4, question: "How do you handle monitoring and alerting?", type: "technical" },
-    { id: 5, question: "Tell me about a time you improved deployment reliability.", type: "behavioral" }
-  ],
-  "Data Scientist": [
-    { id: 1, question: "Explain your approach to feature engineering.", type: "technical" },
-    { id: 2, question: "How do you validate machine learning models?", type: "technical" },
-    { id: 3, question: "Describe your experience with big data technologies.", type: "experience" },
-    { id: 4, question: "How do you communicate technical findings to non-technical stakeholders?", type: "soft skills" },
-    { id: 5, question: "Tell me about a data project that delivered significant business value.", type: "behavioral" }
-  ]
-};
-
-// Fallback responses for the interviewer
-const fallbackResponses = [
-  "Thank you for sharing your perspective. Let's move on to the next question.",
-  "I appreciate your detailed answer. Let's continue with the next topic.",
-  "That's an interesting approach. Now, let's discuss something else.",
-  "Thanks for explaining that. Let's move forward to the next question.",
-  "I understand your point of view. Let's proceed to the next area I'd like to explore."
-];
+import { useSpeechSynthesis } from "@/utilis/useSpeechSynthesis";
+import { useSpeechRecognition } from "@/utilis/useSpeechRecognition";
 
 export default function InterviewCallPage() {
   const router = useRouter();
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
+  const {
+    speakText,
+    isSpeaking,
+    aiHasFinishedSpeaking,
+    setAiHasFinishedSpeaking,
+    init // Add init function from useSpeechSynthesis
+  } = useSpeechSynthesis();
+  const {
+    isListening,
+    liveTranscript,
+    startRecognition,
+    stopRecognition,
+    setLiveTranscript
+  } = useSpeechRecognition();
   const [userResponse, setUserResponse] = useState("");
-  const [questionNumber, setQuestionNumber] = useState(1);
-  const [totalQuestions, setTotalQuestions] = useState(5);
-  const [interviewType, setInterviewType] = useState("Frontend Developer");
-  const [experienceLevel, setExperienceLevel] = useState("Intermediate");
-  const [technologies, setTechnologies] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [timeElapsed, setTimeElapsed] = useState(0);
-  const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
-  const [responses, setResponses] = useState<{[key: number]: string}>({});
-  const [interviewerResponse, setInterviewerResponse] = useState("");
   const [showInterviewerResponse, setShowInterviewerResponse] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [liveTranscript, setLiveTranscript] = useState("");
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [aiHasFinishedSpeaking, setAiHasFinishedSpeaking] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const [isListening, setIsListening] = useState(false);
+  const [interviewerResponse, setInterviewerResponse] = useState("");
   const [micActive, setMicActive] = useState(false);
-  const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
-  const [lastSpeechTime, setLastSpeechTime] = useState<number | null>(null);
-  
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const videoRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const silenceThreshold = 5000; // 5 seconds of silence before auto-submitting
-  
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isCallActive, setIsCallActive] = useState(false);
+
+  // Timer for call duration
+  useEffect(() => {
+    if (isCallActive) {
+      const timer = setInterval(() => {
+        setTimeElapsed(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isCallActive]);
+
+  // Ensure speech synthesis is initialized on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      init();
+    }
+  }, []);
+
+  // Start the interview call
+  const handleStartCall = async () => {
+    setIsCallActive(true);
+  };
+
+  // End the interview call
+  const handleEndCall = () => {
+    setIsCallActive(false);
+    setTimeElapsed(0);
+    setMicActive(false);
+    setShowInterviewerResponse(false);
+    setInterviewerResponse("");
+    setLiveTranscript("");
+    setUserResponse("");
+    setAiHasFinishedSpeaking(false);
+  };
+
+  // Toggle microphone
+  const toggleMicrophone = () => {
+    if (!isCallActive || isSpeaking) return;
+    if (micActive) {
+      stopRecognition();
+      setMicActive(false);
+      // If we have content, submit it
+      if (liveTranscript.trim()) {
+        handleSubmitResponse();
+      }
+    } else {
+      setLiveTranscript("");
+      setMicActive(true);
+      startRecognition();
+    }
+  };
+
+  // Submit the user's response
+  const handleSubmitResponse = () => {
+    if (!liveTranscript.trim() || !isCallActive || isSpeaking) return;
+    setUserResponse(liveTranscript.trim());
+    setLiveTranscript("");
+    setMicActive(false);
+    setShowInterviewerResponse(true);
+    // Simulate interviewer response
+    setInterviewerResponse("Thank you for your response.");
+    // Ensure AI voice is heard
+    setTimeout(() => {
+      speakText("Thank you for your response.");
+    }, 100); // Delay to ensure state is set before speaking
+    setTimeout(() => {
+      setShowInterviewerResponse(false);
+    }, 1500);
+  };
+
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
-  // Timer for call duration
-  useEffect(() => {
-    if (isCallActive) {
-      timerRef.current = setInterval(() => {
-        setTimeElapsed(prev => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [isCallActive]);
-  
-  // Load interview data on component mount
-  useEffect(() => {
-    // Get interview config from localStorage
-    const configString = localStorage.getItem("interviewConfig");
-    if (configString) {
-      try {
-        const config = JSON.parse(configString);
-        setInterviewType(config.interviewType || "Frontend Developer");
-        setExperienceLevel(config.experienceLevel || "Intermediate");
-        setTechnologies(config.technologies || []);
-        setTotalQuestions(config.questionCount || 5);
-      } catch (e) {
-        console.error("Error parsing interview config:", e);
-      }
-    }
-    
-    // Initialize speech synthesis
-    let speechSynthesisInitialized = false;
-    let retryCount = 0;
-    const maxRetries = 3;
-    let cleanupFunction: (() => void) | undefined;
-    
-    // Function to initialize speech synthesis
-    const initSpeechSynthesis = () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        try {
-          synthRef.current = window.speechSynthesis;
-          
-          // Cancel any ongoing speech to reset the state
-          synthRef.current.cancel();
-          
-          speechSynthesisInitialized = true;
-          console.log('Speech synthesis initialized successfully');
-          
-          // Fix for Chrome issue where speech synthesis gets paused when tab loses focus
-          const handleVisibilityChange = () => {
-            if (document.hidden) {
-              // Page is hidden, pause speech synthesis to prevent issues
-              if (synthRef.current) {
-                try {
-                  // TypeScript check for paused property
-                  const synth = synthRef.current as any;
-                  if (synth && synth.paused !== undefined && !synth.paused) {
-                    synth.pause();
-                  }
-                } catch (e) {
-                  console.error('Error pausing speech synthesis:', e);
-                }
-              }
-            } else {
-              // Page is visible again, resume speech synthesis
-              if (synthRef.current) {
-                try {
-                  // TypeScript check for paused property
-                  const synth = synthRef.current as any;
-                  if (synth && synth.paused !== undefined && synth.paused) {
-                    synth.resume();
-                  }
-                } catch (e) {
-                  console.error('Error resuming speech synthesis:', e);
-                }
-              }
-            }
-          };
-          
-          document.addEventListener('visibilitychange', handleVisibilityChange);
-          
-          // Load available voices
-          const loadVoices = () => {
-            try {
-              const voices = synthRef.current?.getVoices() || [];
-              console.log('Available voices:', voices.length);
-              
-              if (voices.length === 0 && retryCount < maxRetries) {
-                // No voices available yet, retry after a delay
-                retryCount++;
-                console.log(`No voices available, retrying (${retryCount}/${maxRetries})...`);
-                setTimeout(loadVoices, 500);
-                return;
-              }
-              
-              // Try to find a professional female voice
-              let femaleVoice = voices.find(voice => 
-                (voice.name.includes('female') || voice.name.includes('Female') || 
-                 voice.name.includes('woman') || voice.name.includes('Woman') || 
-                 voice.name.includes('girl') || voice.name.includes('Girl')) && 
-                voice.lang.startsWith('en')
-              );
-              
-              // If no specific female voice found, try to find any English female voice
-              if (!femaleVoice) {
-                femaleVoice = voices.find(voice => 
-                  voice.name.includes('Google') && voice.lang.startsWith('en') && !voice.name.includes('Male')
-                );
-              }
-              
-              // Fallback to any English voice
-              if (!femaleVoice) {
-                femaleVoice = voices.find(voice => voice.lang.startsWith('en'));
-              }
-              
-              if (femaleVoice) {
-                setSelectedVoice(femaleVoice);
-                console.log('Selected voice:', femaleVoice.name);
-              } else if (voices.length > 0) {
-                setSelectedVoice(voices[0]);
-                console.log('Fallback to first available voice:', voices[0].name);
-              } else {
-                console.warn('No voices available after retries');
-              }
-            } catch (e) {
-              console.error('Error loading voices:', e);
-            }
-          };
-          
-          // Chrome loads voices asynchronously
-          if (synthRef.current.onvoiceschanged !== undefined) {
-            synthRef.current.onvoiceschanged = loadVoices;
-          }
-          
-          // Try to load voices immediately (works in Firefox)
-          setTimeout(loadVoices, 300);
-          
-          cleanupFunction = () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            
-            // Clean up speech synthesis
-            if (synthRef.current) {
-              try {
-                synthRef.current.cancel();
-              } catch (e) {
-                console.error('Error canceling speech synthesis:', e);
-              }
-            }
-          };
-          
-          return cleanupFunction;
-        } catch (e) {
-          console.error('Error initializing speech synthesis:', e);
-          if (retryCount < maxRetries) {
-            retryCount++;
-            console.log(`Retrying speech synthesis initialization (${retryCount}/${maxRetries})...`);
-            setTimeout(initSpeechSynthesis, 1000);
-          } else {
-            console.error('Failed to initialize speech synthesis after multiple attempts');
-            setError("There was a problem with the speech system. Please refresh the page and try again.");
-          }
-        }
-      } else {
-        console.error('Speech synthesis not supported in this browser');
-        setError("Your browser doesn't support speech synthesis. Please use Chrome or Edge.");
-      }
-    };
-    
-    // Start initialization
-    const cleanup = initSpeechSynthesis();
-    
-    return () => {
-      // Use the cleanup function if it was returned
-      if (typeof cleanup === 'function') {
-        cleanup();
-      } else if (speechSynthesisInitialized && synthRef.current) {
-        // Fallback cleanup
-        try {
-          synthRef.current.cancel();
-        } catch (e) {
-          console.error('Error during cleanup:', e);
-        }
-      }
-    };
-  }, []);
-  
-  // Function to speak text with the AI voice
-  const speakText = (text: string) => {
-    if (!synthRef.current || !text) {
-      console.error('Speech synthesis not available or no text to speak');
-      setAiHasFinishedSpeaking(true);
-      return;
-    }
-    
-    // Use a single chunk approach instead of multiple chunks
-    try {
-      // Make sure speech synthesis is not paused
-      if (synthRef.current) {
-        try {
-          // TypeScript check for paused property
-          const synth = synthRef.current as any;
-          if (synth && synth.paused !== undefined && synth.paused) {
-            synth.resume();
-          }
-        } catch (e) {
-          console.error('Error resuming speech synthesis:', e);
-        }
-      }
-      
-      // Cancel any ongoing speech
-      try {
-        synthRef.current.cancel();
-      } catch (e) {
-        console.error('Error canceling speech synthesis:', e);
-      }
-      
-      // Small delay to ensure cancel completes
-      setTimeout(() => {
-        try {
-          // Create a new utterance
-          const utterance = new SpeechSynthesisUtterance(text);
-          utteranceRef.current = utterance;
-          
-          // Set voice properties
-          if (selectedVoice) {
-            utterance.voice = selectedVoice;
-          }
-          
-          // Set voice characteristics
-          utterance.volume = 1.0; // 0 to 1
-          utterance.rate = 1.0;   // 0.1 to 10
-          utterance.pitch = 1.1;  // 0 to 2, slightly higher for female voice
-          
-          // Set event handlers
-          utterance.onstart = () => {
-            setIsSpeaking(true);
-            console.log('AI started speaking');
-          };
-          
-          utterance.onend = () => {
-            setIsSpeaking(false);
-            setAiHasFinishedSpeaking(true);
-            console.log('AI finished speaking');
-          };
-          
-          utterance.onerror = (event: any) => {
-            console.error('Speech synthesis error:', event);
-            // Always finish speaking on error to prevent blocking the UI
-            setIsSpeaking(false);
-            setAiHasFinishedSpeaking(true);
-          };
-          
-          // Set speaking state immediately to prevent UI issues
-          setIsSpeaking(true);
-          
-          // Start speaking
-          if (synthRef.current) {
-            synthRef.current.speak(utterance);
-          }
-        } catch (e) {
-          console.error('Error in speech synthesis:', e);
-          setIsSpeaking(false);
-          setAiHasFinishedSpeaking(true);
-        }
-      }, 250);
-    } catch (e) {
-      console.error('Speech synthesis error:', e);
-      setIsSpeaking(false);
-      setAiHasFinishedSpeaking(true);
-    }
-  };
-  
-  // Function to split text into manageable chunks (kept for reference but not used anymore)
-  const splitTextIntoChunks = (text: string, maxChunkLength: number = 150): string[] => {
-    const chunks: string[] = [];
-    let currentChunk = "";
-    
-    // Split by sentences to avoid cutting in the middle of a sentence
-    const sentences = text.split(/(?<=\.|\?|!)[\s]+/);
-    
-    for (const sentence of sentences) {
-      if (currentChunk.length + sentence.length > maxChunkLength) {
-        chunks.push(currentChunk);
-        currentChunk = sentence;
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + sentence;
-      }
-    }
-    
-    if (currentChunk) {
-      chunks.push(currentChunk);
-    }
-    
-    return chunks;
-  };
-  
-  // Initialize silence timer for auto-submission
-  useEffect(() => {
-    // Only set up silence timer if we're actively listening
-    if (isListening && micActive && liveTranscript.trim()) {
-      // Clear any existing silence timer
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        setSilenceTimer(null);
-      }
-      
-      // Set a new silence timer
-      const newTimer = setTimeout(() => {
-        // If we have a response and enough time has passed since last speech
-        if (liveTranscript.trim() && Date.now() - (lastSpeechTime || 0) >= silenceThreshold) {
-          console.log('Silence detected, auto-submitting response');
-          submitResponse();
-        }
-      }, silenceThreshold);
-      
-      setSilenceTimer(newTimer);
-      
-      return () => {
-        if (newTimer) {
-          clearTimeout(newTimer);
-        }
-      };
-    }
-    
-    return () => {};
-  }, [isListening, micActive, liveTranscript, lastSpeechTime, silenceThreshold]);
-  
-  // Clean up resources when component unmounts
-  useEffect(() => {
-    return () => {
-      // Clean up speech recognition
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {
-          console.error('Error stopping speech recognition during cleanup', e);
-        }
-      }
-      
-      // Clear any silence timers
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        setSilenceTimer(null);
-      }
-    };
-  }, []);
-  
-  // Get random interviewer response
-  const getRandomResponse = (isLastQuestion: boolean): string => {
-    if (isLastQuestion) {
-      return "Thank you for all your responses. That concludes our interview today. We appreciate your time and insights.";
-    }
-    
-    const randomIndex = Math.floor(Math.random() * fallbackResponses.length);
-    return fallbackResponses[randomIndex];
-  };
-  
-  // Start the interview call
-  const startCall = () => {
-    setIsLoading(true);
-    
-    try {
-      // Get questions for the selected interview type
-      const typeQuestions = sampleQuestions[interviewType] || sampleQuestions["Frontend Developer"];
-      
-      // Take only the requested number of questions
-      const selectedQuestions = typeQuestions.slice(0, totalQuestions);
-      
-      setQuestions(selectedQuestions);
-      
-      // Set the first question
-      if (selectedQuestions.length > 0) {
-        setCurrentQuestion(selectedQuestions[0]);
-        setIsCallActive(true);
-        setQuestionNumber(1);
-        setMicActive(true); // Auto-activate microphone
-        
-        // First, let the AI speak
-        setAiHasFinishedSpeaking(false);
-        
-        // Show welcome message - separate the welcome and first question for better speech synthesis
-        const welcomeIntro = `Welcome to your ${interviewType} interview. I'll be asking you ${totalQuestions} questions about your experience and skills. Let's begin with the first question.`;
-        const firstQuestion = selectedQuestions[0].question;
-        const welcomeMessage = `${welcomeIntro} ${firstQuestion}`;
-        
-        setInterviewerResponse(welcomeMessage);
-        setShowInterviewerResponse(true);
-        
-        // Small delay before speaking to ensure UI is updated
-        setTimeout(() => {
-          // Speak the welcome message and first question
-          speakText(welcomeMessage);
-          
-          // After showing the welcome message, hide it after the AI finishes speaking
-          const checkSpeechStatus = () => {
-            if (!isSpeaking) {
-              setShowInterviewerResponse(false);
-              
-              // Start speech recognition only after AI has finished speaking
-              setTimeout(() => {
-                if (recognitionRef.current) {
-                  try {
-                    recognitionRef.current.start();
-                    console.log('Starting speech recognition after AI finished');
-                  } catch (e) {
-                    console.error('Error starting speech recognition', e);
-                    setMicActive(false);
-                  }
-                }
-              }, 500);
-              
-              return;
-            }
-            
-            // Check again in 500ms
-            setTimeout(checkSpeechStatus, 500);
-          };
-          
-          // Start checking if speech has finished
-          setTimeout(checkSpeechStatus, 1000);
-        }, 500);
-      } else {
-        setError("Failed to start interview. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error starting interview:", error);
-      setError("Failed to start interview. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // End the interview call
-  const endCall = () => {
-    setIsCallActive(false);
-    setTimeElapsed(0);
-    setQuestionNumber(1);
-    setCurrentQuestion(null);
-    setUserResponse("");
-    setInterviewerResponse("");
-    setShowInterviewerResponse(false);
-    setResponses({});
-    setLiveTranscript("");
-    setTranscript("");
-    setAiHasFinishedSpeaking(false);
-    setIsSpeaking(false);
-    
-    // Stop speech recognition
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.error('Error stopping speech recognition', e);
-      }
-    }
-    
-    // Stop any ongoing speech with a small delay to prevent aborted errors
-    setTimeout(() => {
-      if (synthRef.current) {
-        try {
-          // Make sure it's not paused
-          if (synthRef.current.paused) {
-            synthRef.current.resume();
-          }
-          // Then cancel
-          synthRef.current.cancel();
-        } catch (e) {
-          console.error('Error canceling speech synthesis:', e);
-        }
-      }
-      
-      // Navigate back to setup
-      router.push('/interview/setup');
-    }, 100);
-  };
-  
-  // Move to the next question
-  const nextQuestion = () => {
-    if (questionNumber >= totalQuestions) return;
-    
-    setIsLoading(true);
-    try {
-      // Get the next question
-      if (questionNumber < questions.length) {
-        const nextQuestion = questions[questionNumber];
-        
-        // Update state with the new question
-        setCurrentQuestion(nextQuestion);
-        setQuestionNumber(prev => prev + 1);
-        setUserResponse("");
-        setTranscript("");
-        setLiveTranscript("");
-        setShowInterviewerResponse(true);
-        
-        // Ensure any previous speech is fully canceled
-        if (synthRef.current) {
-          try {
-            // Make sure it's not paused
-            const synth = synthRef.current as any;
-            if (synth && synth.paused !== undefined && synth.paused) {
-              synth.resume();
-            }
-            // Then cancel
-            synthRef.current.cancel();
-          } catch (e) {
-            console.error('Error canceling previous speech:', e);
-          }
-        }
-        
-        // Longer delay before speaking to ensure everything is reset
-        setTimeout(() => {
-          try {
-            // Speak the next question
-            const questionText = nextQuestion.question;
-            setInterviewerResponse(questionText);
-            speakText(questionText);
-            
-            // Set up a timer to notify when AI finishes speaking
-            const checkAiFinishedSpeaking = () => {
-              if (!isSpeaking) {
-                // AI has finished speaking, set flag but don't auto-activate mic
-                setAiHasFinishedSpeaking(true);
-                console.log('AI finished speaking, ready for user to click mic');
-                return;
-              }
-              
-              // Check again in 500ms
-              setTimeout(checkAiFinishedSpeaking, 500);
-            };
-            
-            // Start checking when AI finishes speaking
-            setTimeout(checkAiFinishedSpeaking, 1000);
-          } catch (e) {
-            console.error('Error speaking next question:', e);
-            // Activate microphone even if there's an error
-            setMicActive(true);
-          }
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error getting next question:", error);
-      setError("Failed to get next question. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Toggle microphone
-  const toggleMicrophone = () => {
-    if (!isCallActive || isSpeaking) {
-      console.log('Cannot toggle microphone: call inactive or AI speaking');
-      return;
-    }
-    
-    console.log('Toggle microphone called, current state:', micActive);
-    
-    if (micActive) {
-      // Turn off microphone
-      setMicActive(false);
-      setIsListening(false);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-          console.log('Microphone turned off');
-        } catch (e) {
-          console.error('Error stopping speech recognition', e);
-        }
-      }
-      
-      // If we have content, submit it
-      if (liveTranscript.trim()) {
-        submitResponse();
-      }
-    } else {
-      // Turn on microphone
-      setMicActive(true);
-      setLiveTranscript("");
-      setTranscript("");
-      
-      // Make sure recognition is initialized
-      if (!recognitionRef.current && typeof window !== 'undefined') {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-          recognitionRef.current = new SpeechRecognition();
-          recognitionRef.current.continuous = true;
-          recognitionRef.current.interimResults = true;
-          recognitionRef.current.lang = 'en-US';
-          
-          // Set up event handlers
-          recognitionRef.current.onresult = (event: any) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-            
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              const transcript = event.results[i][0].transcript;
-              
-              if (event.results[i].isFinal) {
-                finalTranscript += transcript;
-              } else {
-                interimTranscript += transcript;
-              }
-            }
-            
-            // Update the live transcript with the latest speech
-            setLiveTranscript(prev => {
-              const updatedTranscript = prev + finalTranscript;
-              return updatedTranscript;
-            });
-            
-            // If there's an interim result, show it in the UI
-            if (interimTranscript) {
-              setTranscript(interimTranscript);
-            }
-            
-            // Reset the silence timer since we detected speech
-            setLastSpeechTime(Date.now());
-          };
-          
-          recognitionRef.current.onstart = () => {
-            console.log('Speech recognition started');
-            setIsListening(true);
-            setLastSpeechTime(Date.now());
-          };
-          
-          recognitionRef.current.onend = () => {
-            console.log('Speech recognition ended');
-            setIsListening(false);
-            
-            // Restart recognition if the mic is active and AI is not speaking
-            if (micActive && isCallActive && !isSpeaking) {
-              try {
-                recognitionRef.current.start();
-                console.log('Restarting speech recognition');
-              } catch (e) {
-                console.error('Error restarting speech recognition', e);
-                setMicActive(false);
-              }
-            }
-          };
-          
-          recognitionRef.current.onerror = (event: any) => {
-            console.error('Speech recognition error:', event.error);
-            
-            // Handle "no-speech" error gracefully
-            if (event.error === 'no-speech') {
-              console.log('No speech detected, continuing...');
-              return;
-            }
-            
-            setError(`Speech recognition error: ${event.error}`);
-            setIsListening(false);
-            setMicActive(false);
-          };
-        }
-      }
-      
-      // Start recognition
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-          console.log('Microphone turned on');
-        } catch (e) {
-          console.error('Error starting speech recognition', e);
-          // Try stopping first and then starting again
-          try {
-            recognitionRef.current.stop();
-            setTimeout(() => {
-              if (recognitionRef.current) {
-                recognitionRef.current.start();
-                console.log('Microphone turned on after stop/start');
-              }
-            }, 100);
-          } catch (e2) {
-            console.error('Error in stop/start sequence:', e2);
-            setMicActive(false);
-          }
-        }
-      } else {
-        console.error('Speech recognition not available');
-        setError("Speech recognition is not available in your browser. Please try using Chrome or Edge.");
-        setMicActive(false);
-      }
-    }
-  };
-  
-  // Submit the user's response
-  const submitResponse = () => {
-    if (!liveTranscript.trim() || !isCallActive || isSpeaking) return;
-    
-    // Clear any silence timer
-    if (silenceTimer) {
-      clearTimeout(silenceTimer);
-      setSilenceTimer(null);
-    }
-    
-    setIsLoading(true);
-    setMicActive(false);
-    setIsListening(false);
-    
-    // Make sure speech recognition is stopped before proceeding
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-        console.log('Stopping speech recognition before submitting response');
-      } catch (e) {
-        console.error('Error stopping speech recognition', e);
-      }
-    }
-    
-    try {
-      // Use speech recognition transcript
-      const finalResponse = liveTranscript.trim();
-      
-      // Save the user's response
-      const updatedResponses = { ...responses };
-      updatedResponses[questionNumber - 1] = finalResponse;
-      setResponses(updatedResponses);
-      
-      // Clear the transcript
-      setLiveTranscript("");
-      setTranscript("");
-      
-      // Set AI as not finished speaking yet
-      setAiHasFinishedSpeaking(false);
-      
-      // Stop speech recognition while AI is responding
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-          console.log('Stopping speech recognition while AI responds');
-        } catch (e) {
-          console.error('Error stopping speech recognition', e);
-        }
-      }
-      
-      // Generate interviewer response
-      const isLastQuestion = questionNumber >= totalQuestions;
-      const response = getRandomResponse(isLastQuestion);
-      setInterviewerResponse(response);
-      setShowInterviewerResponse(true);
-      
-      // Ensure any previous speech is fully canceled
-      if (synthRef.current) {
-        try {
-          // Make sure it's not paused
-          const synth = synthRef.current as any;
-          if (synth && synth.paused !== undefined && synth.paused) {
-            synth.resume();
-          }
-          // Then cancel
-          synthRef.current.cancel();
-        } catch (e) {
-          console.error('Error canceling previous speech:', e);
-        }
-      }
-      
-      // Longer delay before speaking to ensure everything is reset
-      setTimeout(() => {
-        try {
-          // Speak the response with a simple approach
-          const utterance = new SpeechSynthesisUtterance(response);
-          
-          // Set voice properties
-          if (selectedVoice) {
-            utterance.voice = selectedVoice;
-          }
-          
-          // Set voice characteristics
-          utterance.volume = 1.0; // 0 to 1
-          utterance.rate = 1.0;   // 0.1 to 10
-          utterance.pitch = 1.1;  // 0 to 2, slightly higher for female voice
-          
-          // Set event handlers
-          utterance.onstart = () => {
-            setIsSpeaking(true);
-            console.log('AI started speaking response');
-          };
-          
-          utterance.onend = () => {
-            console.log('AI finished speaking response');
-            setIsSpeaking(false);
-            setShowInterviewerResponse(false);
-            
-            // Wait a moment before proceeding to next question
-            setTimeout(() => {
-              if (questionNumber < totalQuestions) {
-                // Move to the next question
-                nextQuestion();
-              } else {
-                setIsCallActive(false);
-                setError("Interview complete! Thank you for your time.");
-              }
-            }, 1000);
-          };
-          
-          utterance.onerror = (event: any) => {
-            console.error('Speech synthesis error in response:', event);
-            // Always finish on error
-            setIsSpeaking(false);
-            setShowInterviewerResponse(false);
-            
-            // Move to next question even on error
-            setTimeout(() => {
-              if (questionNumber < totalQuestions) {
-                nextQuestion();
-              } else {
-                setIsCallActive(false);
-                setError("Interview complete! Thank you for your time.");
-              }
-            }, 1000);
-          };
-          
-          // Set speaking state
-          setIsSpeaking(true);
-          
-          // Start speaking
-          if (synthRef.current) {
-            synthRef.current.speak(utterance);
-          }
-        } catch (e) {
-          console.error('Error in AI response speech:', e);
-          // Fallback in case of speech error - move to next question
-          if (questionNumber < totalQuestions) {
-            nextQuestion();
-          } else {
-            setIsCallActive(false);
-            setError("Interview complete! Thank you for your time.");
-          }
-        }
-      }, 500);
-    } catch (error) {
-      console.error("Error recording response:", error);
-      setError("Failed to record response. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
+
   return (
     <div className="min-h-screen bg-[#0A101F] text-white flex flex-col">
       {/* Header with improved centered layout */}
@@ -993,7 +152,6 @@ export default function InterviewCallPage() {
                 {/* AI Interviewer side */}
                 <div className="min-h-[35vh] relative">
                   <div 
-                    ref={videoRef}
                     className={cn(
                       "relative w-full h-full rounded-xl overflow-hidden bg-[#1A2138] border border-[#2A3A64] shadow-lg flex items-center justify-center",
                       isCallActive ? "" : "opacity-80"
@@ -1034,12 +192,20 @@ export default function InterviewCallPage() {
                       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6">
                         <div className="bg-[#1A2138]/80 rounded-lg p-5 max-w-xl border border-[#2A3A64] shadow-lg">
                           <div className="flex items-center mb-3">
-                            <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">
-                              AI
+                            <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-6 h-6 flex items-center justify-center shadow-[0_0_40px_rgba(1,205,254,0.4)]">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-28 w-28 text-white opacity-80">
+                                <path d="M12 2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8Z" />
+                                <path d="M20 2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8Z" />
+                                <path d="M20 16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16Z" />
+                                <path d="M6 8v8" />
+                                <path d="M18 8v8" />
+                                <circle cx="12" cy="12" r="2" />
+                                <path d="M10 16.5V17a2 2 0 1 0 4 0v-.5" />
+                              </svg>
                             </div>
-                            <div className="ml-2 text-sm text-[#8BA3C7]">AI Interviewer</div>
+                            <span className="text-white font-medium">AI</span>
                           </div>
-                          <p className="text-white text-lg">{interviewerResponse}</p>
+                          <p className="text-white text-sm">{interviewerResponse}</p>
                         </div>
                       </div>
                     )}
@@ -1079,7 +245,7 @@ export default function InterviewCallPage() {
                   variant="outline"
                   size="icon"
                   className="rounded-full w-14 h-14 border-2 bg-[#FF3864] border-[#FF3864] text-white hover:bg-[#FF3864]/80 shadow-[0_0_15px_rgba(255,56,100,0.3)]"
-                  onClick={endCall}
+                  onClick={handleEndCall}
                 >
                   <Phone className="h-6 w-6 rotate-135" />
                 </Button>
@@ -1090,7 +256,6 @@ export default function InterviewCallPage() {
             <div className="lg:col-span-1 bg-gradient-to-b from-[#0E1428]/90 to-[#1A2138]/90 border border-[#2A3A64]/50 rounded-xl shadow-lg overflow-hidden h-[600px] flex flex-col">
               <div className="p-4 border-b border-[#2A3A64]/50 bg-[#1A2138]/50 backdrop-blur-sm">
                 <h3 className="text-lg font-medium text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5]">Interview Transcript</h3>
-                <p className="text-[#8BA3C7] text-xs">Question {questionNumber} of {totalQuestions}</p>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -1138,40 +303,15 @@ export default function InterviewCallPage() {
                     )}
                     
                     {/* Question and answer pairs - only shown after responses exist */}
-                    {Object.entries(responses).map(([questionIdx, response]) => (
-                      <div key={questionIdx} className="space-y-3 animate-fade-in">
+                    {userResponse && (
+                      <div className="space-y-3 animate-fade-in">
                         <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30">
                           <div className="flex items-center mb-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
-                              <span className="text-white text-xs font-bold">AI</span>
-                            </div>
-                            <p className="text-[#8BA3C7] text-xs">Question {parseInt(questionIdx) + 1}</p>
-                          </div>
-                          <p className="text-white text-sm">{questions[parseInt(questionIdx)]?.question}</p>
-                        </div>
-                        <div className="bg-[#01CDFE]/10 p-3 rounded-lg border border-[#01CDFE]/20 ml-4">
-                          <div className="flex items-center mb-2">
-                            <div className="w-6 h-6 rounded-full bg-[#1A2138] border border-[#2A3A64] flex items-center justify-center mr-2">
-                              <span className="text-[#8BA3C7] text-xs font-bold">You</span>
-                            </div>
+                            <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-4 h-4 mr-2"></div>
                             <p className="text-[#8BA3C7] text-xs">Your Response</p>
                           </div>
-                          <p className="text-white text-sm">{response}</p>
+                          <p className="text-white text-sm">{userResponse}</p>
                         </div>
-                      </div>
-                    ))}
-                    
-                    {/* Current question indicator - only shown after a question is asked and no response yet */}
-                    {currentQuestion && !responses[questionNumber - 1] && (
-                      <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30 relative animate-fade-in">
-                        <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#01CDFE] to-[#9C42F5] rounded-full"></div>
-                        <div className="flex items-center mb-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
-                            <span className="text-white text-xs font-bold">AI</span>
-                          </div>
-                          <p className="text-[#8BA3C7] text-xs">Current Question</p>
-                        </div>
-                        <p className="text-white text-sm">{currentQuestion.question}</p>
                       </div>
                     )}
                   </>
@@ -1218,7 +358,7 @@ export default function InterviewCallPage() {
                             )}
                           </div>
                           <p className="text-white">{liveTranscript}</p>
-                          {transcript && <p className="text-[#8BA3C7] italic mt-1">{transcript}...</p>}
+                          {userResponse && <p className="text-[#8BA3C7] italic mt-1">{userResponse}...</p>}
                           {micActive && liveTranscript && (
                             <div className="mt-3 text-xs text-[#8BA3C7] italic">
                               Click the microphone button again when you're finished to submit your response
@@ -1282,7 +422,7 @@ export default function InterviewCallPage() {
                       <div className="flex w-full gap-2 mt-2">
                         <button
                           className={`px-6 py-2 rounded-full font-medium flex-1 ${isSpeaking ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] hover:opacity-90'} text-white transition-all duration-300 flex items-center justify-center gap-2`}
-                          onClick={submitResponse}
+                          onClick={handleSubmitResponse}
                           disabled={isSpeaking || !isCallActive}
                         >
                           <Send className="h-4 w-4" />
@@ -1306,15 +446,8 @@ export default function InterviewCallPage() {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A101F]/70 backdrop-blur-sm z-10 p-4 overflow-y-auto">
             <div className="text-center mb-6 max-w-md">
               <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] bg-clip-text text-transparent">
-                {interviewType} Interview
+                Interview
               </h1>
-              <p className="text-[#8BA3C7] mb-1">{experienceLevel} Level</p>
-              <p className="text-[#E2F0FF] text-sm">
-                {technologies.length > 0 ? technologies.join(' • ') : 'General interview'}
-              </p>
-              <p className="mt-4 text-[#8BA3C7]">
-                You'll be interviewed by our AI assistant who will ask you {totalQuestions} questions.
-              </p>
             </div>
             
             {/* Interview Guidelines Card */}
@@ -1375,31 +508,21 @@ export default function InterviewCallPage() {
             </div>
             
             <Button
-              onClick={startCall}
-              disabled={isLoading}
+              onClick={handleStartCall}
               className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white font-medium py-3 px-8 rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-3 shadow-lg text-lg"
             >
-              {isLoading ? (
-                <>
-                  <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <span>Starting Interview...</span>
-                </>
-              ) : (
-                <>
-                  <Phone className="h-5 w-5" />
-                  <span>Start Interview</span>
-                </>
-              )}
+              <Phone className="h-5 w-5" />
+              <span>Start Interview</span>
             </Button>
           </div>
         )}
         
         {/* Error Message */}
-        {error && (
+        {/* {error && (
           <div className="absolute bottom-4 left-4 right-4 p-3 bg-[#FF3864]/10 border border-[#FF3864]/30 rounded-lg z-50">
             <p className="text-[#FF3864] text-center">{error}</p>
           </div>
-        )}
+        )} */}
       </main>
 
       {/* Add global styles for animations */}
