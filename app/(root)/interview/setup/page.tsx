@@ -107,26 +107,33 @@ export default function InterviewSetupPage() {
     setError(null);
     setIsLoading(true);
     
+    // Get the proper role name from the selected type
+    const roleName = selectedType === "other" ? customType : interviewTypes.find(t => t.id === selectedType)?.name || "";
+    
     // Create the interview configuration
-    const interviewConfig = {
-      experienceLevel,
-      questionCount,
-      interviewType: selectedType === "other" ? customType : interviewTypes.find(t => t.id === selectedType)?.name || "",
-      technologies: selectedTechnologies
+    const interviewDetails = {
+      role: roleName,
+      experienceLevel: experienceLevel,
+      technologies: selectedTechnologies,
+      questionCount: questionCount
     };
     
-    // Save interview configuration to localStorage
-    localStorage.setItem("interviewConfig", JSON.stringify(interviewConfig));
+    // Save interview details to localStorage for the call page to use
+    localStorage.setItem("interviewDetails", JSON.stringify(interviewDetails));
     
     try {
- 
+      // Redirect to the call page with parameters
+      const queryParams = new URLSearchParams({
+        role: roleName,
+        level: experienceLevel,
+        technologies: selectedTechnologies.join(','),
+        count: questionCount.toString()
+      }).toString();
       
-      // Navigate to the call page
-      router.push("/interview/call");
+      router.push(`/interview/call?${queryParams}`);
     } catch (error) {
-      console.error("Error creating interview:", error);
-      setError("Failed to create interview. Please try again.");
-    } finally {
+      console.error("Error starting interview:", error);
+      setError("There was an error starting your interview. Please try again.");
       setIsLoading(false);
     }
   };

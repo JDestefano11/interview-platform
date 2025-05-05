@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Phone, Mic, MicOff, Video, VideoOff, MessageSquare, User, X, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSpeechSynthesis } from "@/utilis/useSpeechSynthesis";
 import { useSpeechRecognition } from "@/utilis/useSpeechRecognition";
+import { generateGeminiQuestion, generateGeminiFeedback, generateGeminiIntroduction } from "@/utilis/gemini";
 
 export default function InterviewCallPage() {
   const router = useRouter();
@@ -15,8 +16,10 @@ export default function InterviewCallPage() {
     isSpeaking,
     aiHasFinishedSpeaking,
     setAiHasFinishedSpeaking,
-    init // Add init function from useSpeechSynthesis
+    init
   } = useSpeechSynthesis();
+
+  // Speech recognition hook
   const {
     isListening,
     liveTranscript,
@@ -24,12 +27,147 @@ export default function InterviewCallPage() {
     stopRecognition,
     setLiveTranscript
   } = useSpeechRecognition();
+
+  // Track the last spoken text to prevent repetition
+  const [lastSpokenText, setLastSpokenText] = useState("");
+  
+  // Force the next step after speech finishes
+  const forceNextStep = useRef(false);
+
+  // Memoize the speakText function to prevent it from changing between renders
+  const memoizedSpeakText = useCallback((text: string, nextStep?: string) => {
+    // Skip if the text is empty, already speaking, or this exact text was just spoken
+    if (!text || isSpeaking || text === lastSpokenText) {
+      console.log('Skipping speech: empty, already speaking, or duplicate text');
+      return;
+    }
+    
+    console.log('Speaking text (length):', text.length);
+    setLastSpokenText(text); // Track what we're speaking to prevent duplicates
+    
+    // If nextStep is provided, set the flag to force that step after speech
+    if (nextStep) {
+      forceNextStep.current = true;
+      console.log(`Will force transition to ${nextStep} after speech`);
+    }
+    
+    speakText(text);
+  }, [speakText, isSpeaking, lastSpokenText]);
+
   const [userResponse, setUserResponse] = useState("");
   const [showInterviewerResponse, setShowInterviewerResponse] = useState(false);
   const [interviewerResponse, setInterviewerResponse] = useState("");
   const [micActive, setMicActive] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isCallActive, setIsCallActive] = useState(false);
+  const [interviewStep, setInterviewStep] = useState<'idle' | 'introduction' | 'question' | 'listening' | 'feedback' | 'finished'>('idle');
+  const [currentQuestion, setCurrentQuestion] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
+  const [currentTranscript, setCurrentTranscript] = useState<string>("");
+
+  const [hasSpokenIntroduction, setHasSpokenIntroduction] = useState(false);
+  const [hasSpokenQuestion, setHasSpokenQuestion] = useState(false);
+  const [hasSpokenFeedback, setHasSpokenFeedback] = useState(false);
+
+  const [username, setUsername] = useState<string>("");
+  const [showNameInput, setShowNameInput] = useState<boolean>(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+ 
+  const [interviewInfo, setInterviewInfo] = useState({
+    role: "Software Engineer", 
+    technologies: ["React", "TypeScript"], 
+    experienceLevel: "mid-level", 
+    previousQuestions: previousQuestions,
+    username: username, 
+  });
+
+  // Memoize the interview info to prevent it from changing between renders
+  const [memoizedInterviewInfo, setMemoizedInterviewInfo] = useState({
+    role: interviewInfo.role,
+    technologies: interviewInfo.technologies,
+    experienceLevel: interviewInfo.experienceLevel,
+    previousQuestions: previousQuestions,
+    username: username,
+  });
+
+  // Update the memoized interview info when the interview details change
+  useEffect(() => {
+    // Update the memoizedInterviewInfo when interviewInfo changes
+    setMemoizedInterviewInfo({
+      role: interviewInfo.role,
+      technologies: interviewInfo.technologies,
+      experienceLevel: interviewInfo.experienceLevel,
+      previousQuestions: previousQuestions,
+      username: username,
+    });
+  }, [interviewInfo, previousQuestions, username]);
+
+  // Reset the speaking state when the interview step changes
+  useEffect(() => {
+    // When changing steps, reset the AI speaking finished state
+    setAiHasFinishedSpeaking(false);
+    console.log(`Interview step changed to: ${interviewStep}`);
+  }, [interviewStep]);
+
+  // Reset all state flags when starting a new call
+  const handleStartCall = () => {
+    if (!username) {
+      setShowNameInput(true);
+      return;
+    }
+    
+    // Reset all state
+    resetAllState();
+    
+    // Start the call
+    setIsCallActive(true);
+    setInterviewStep('introduction');
+    console.log('Starting new interview with:', { role: interviewInfo.role, level: interviewInfo.experienceLevel, technologies: interviewInfo.technologies });
+  };
+
+  // Reset all state when ending a call
+  const handleEndCall = () => {
+    // Cancel any ongoing speech
+    if (typeof window !== 'undefined' && typeof window.speechSynthesis !== 'undefined') {
+      window.speechSynthesis.cancel();
+    }
+    
+    // Reset all state
+    resetAllState();
+    console.log('Interview ended, all state reset');
+  };
+
+  // Helper to reset all state (including hooks if possible)
+  const resetAllState = () => {
+    // Reset interview state
+    setInterviewStep('idle');
+    setIsCallActive(false);
+    setCurrentQuestion("");
+    setCurrentTranscript("");
+    setUserResponse("");
+    setShowInterviewerResponse(false);
+    setInterviewerResponse("");
+    setMicActive(false);
+    setIsLoading(false);
+    setAiHasFinishedSpeaking(false);
+    setLiveTranscript("");
+    
+    // Reset flags to prevent repetition
+    setHasSpokenIntroduction(false);
+    setHasSpokenQuestion(false);
+    setHasSpokenFeedback(false);
+    setLastSpokenText("");
+    
+    // Reset speech synthesis
+    if (typeof window !== 'undefined') {
+      if (typeof window.speechSynthesis !== 'undefined') window.speechSynthesis.cancel();
+    }
+    
+    // Reset previous questions to prevent repetition
+    setPreviousQuestions([]);
+  };
 
   // Timer for call duration
   useEffect(() => {
@@ -48,22 +186,257 @@ export default function InterviewCallPage() {
     }
   }, []);
 
-  // Start the interview call
-  const handleStartCall = async () => {
+  // Reset all state on mount
+  useEffect(() => {
+    resetAllState();
+  }, []);
+
+  // Get username on mount if available
+  useEffect(() => {
+    // Try to get username from localStorage or session
+    const storedUsername = typeof window !== 'undefined' ? 
+      localStorage.getItem('username') || sessionStorage.getItem('username') : null;
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
+
+  // Get interview details from URL parameters or localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        // First try to get parameters from URL
+        const params = new URLSearchParams(window.location.search);
+        const urlRole = params.get('role');
+        const urlLevel = params.get('level');
+        const urlTechnologies = params.get('technologies')?.split(',').filter(Boolean) || [];
+        
+        // If URL parameters exist, use them
+        if (urlRole && urlLevel) {
+          console.log('Using interview details from URL parameters');
+          setInterviewInfo(prevInfo => ({
+            ...prevInfo,
+            role: urlRole,
+            experienceLevel: urlLevel,
+            technologies: urlTechnologies,
+          }));
+        } 
+        // Otherwise try localStorage
+        else {
+          const savedDetails = localStorage.getItem('interviewDetails');
+          if (savedDetails) {
+            const details = JSON.parse(savedDetails);
+            console.log('Using interview details from localStorage', details);
+            setInterviewInfo(prevInfo => ({
+              ...prevInfo,
+              role: details.role || 'Software Developer',
+              experienceLevel: details.experienceLevel || 'Intermediate',
+              technologies: Array.isArray(details.technologies) ? details.technologies : [],
+            }));
+          }
+        }
+        
+        // Get username from localStorage if available
+        const savedUsername = localStorage.getItem('username');
+        if (savedUsername) {
+          setUsername(savedUsername);
+          setShowNameInput(false);
+        } else {
+          setShowNameInput(true);
+        }
+      } catch (error) {
+        console.error('Error parsing interview details:', error);
+        // Fallback to defaults
+        setInterviewInfo(prevInfo => ({
+          ...prevInfo,
+          role: 'Software Developer',
+          experienceLevel: 'Intermediate',
+          technologies: ['JavaScript', 'React'],
+        }));
+      }
+    }
+  }, []);
+
+  // Display the role and experience level in the UI
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      // Update the page title to reflect the interview type
+      document.title = `AI Interview - ${interviewInfo.role}`;
+      
+      // Log the current interview details for debugging
+      console.log('Current interview details:', {
+        role: interviewInfo.role,
+        experienceLevel: interviewInfo.experienceLevel,
+        technologies: interviewInfo.technologies,
+        username: username
+      });
+    }
+  }, [interviewInfo, username]);
+
+  // Handle name submission
+  const handleNameSubmit = () => {
+    if (nameInputRef.current && nameInputRef.current.value) {
+      const newUsername = nameInputRef.current.value.trim();
+      setUsername(newUsername);
+      // Store in localStorage for future sessions
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('username', newUsername);
+      }
+    }
+    setShowNameInput(false);
+    
+    // Start the interview with the new username
+    resetAllState();
     setIsCallActive(true);
+    setInterviewStep('introduction');
   };
 
-  // End the interview call
-  const handleEndCall = () => {
-    setIsCallActive(false);
-    setTimeElapsed(0);
-    setMicActive(false);
-    setShowInterviewerResponse(false);
-    setInterviewerResponse("");
-    setLiveTranscript("");
-    setUserResponse("");
-    setAiHasFinishedSpeaking(false);
+  // Handle name submission with Enter key
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit();
+    }
   };
+
+  // Introduction: Speak ONCE when step is 'introduction'
+  useEffect(() => {
+    if (
+      isCallActive &&
+      interviewStep === 'introduction' &&
+      !hasSpokenIntroduction &&
+      !isSpeaking &&
+      !isLoading
+    ) {
+      setHasSpokenIntroduction(true);
+      (async () => {
+        setIsLoading(true);
+        setAiHasFinishedSpeaking(false);
+        const intro = await generateGeminiIntroduction({
+          role: memoizedInterviewInfo.role,
+          experienceLevel: memoizedInterviewInfo.experienceLevel,
+          username: memoizedInterviewInfo.username
+        });
+        setIsLoading(false);
+        setCurrentTranscript(intro);
+        speakText(intro);
+      })();
+    }
+  }, [isCallActive, interviewStep, hasSpokenIntroduction, isSpeaking, isLoading, speakText, memoizedInterviewInfo]);
+
+  // Question: Speak ONCE when step is 'question'
+  useEffect(() => {
+    if (
+      isCallActive &&
+      interviewStep === 'question' &&
+      !hasSpokenQuestion &&
+      !isSpeaking &&
+      !isLoading
+    ) {
+      setHasSpokenQuestion(true);
+      (async () => {
+        setIsLoading(true);
+        setAiHasFinishedSpeaking(false);
+        const q = await generateGeminiQuestion({ ...memoizedInterviewInfo, previousQuestions });
+        setCurrentQuestion(q);
+        setPreviousQuestions(prev => [...prev, q]);
+        setIsLoading(false);
+        setCurrentTranscript(q);
+        speakText(q);
+      })();
+    }
+  }, [isCallActive, interviewStep, hasSpokenQuestion, isSpeaking, isLoading, memoizedInterviewInfo, previousQuestions, speakText]);
+
+  // Feedback: Speak ONCE when step is 'feedback'
+  useEffect(() => {
+    if (
+      isCallActive &&
+      interviewStep === 'feedback' &&
+      !hasSpokenFeedback &&
+      !isSpeaking &&
+      !isLoading &&
+      currentQuestion &&
+      userResponse
+    ) {
+      setHasSpokenFeedback(true);
+      (async () => {
+        setIsLoading(true);
+        setAiHasFinishedSpeaking(false);
+        try {
+          const feedback = await generateGeminiFeedback(
+            {
+              role: memoizedInterviewInfo.role,
+              technologies: memoizedInterviewInfo.technologies,
+              experienceLevel: memoizedInterviewInfo.experienceLevel,
+            },
+            currentQuestion,
+            userResponse
+          );
+          setCurrentTranscript(feedback);
+          speakText(feedback);
+        } catch (err) {
+          setCurrentTranscript('Sorry, there was an error generating feedback.');
+          speakText('Sorry, there was an error generating feedback.');
+        }
+        setIsLoading(false);
+      })();
+    }
+  }, [isCallActive, interviewStep, hasSpokenFeedback, isSpeaking, isLoading, currentQuestion, userResponse, memoizedInterviewInfo, speakText, setAiHasFinishedSpeaking]);
+
+  // SINGLE SPEECH SYNTHESIS-DRIVEN TRANSITION EFFECT
+  useEffect(() => {
+    if (!aiHasFinishedSpeaking) return;
+    if (!isCallActive) return;
+    if (isSpeaking) return;
+    if (isLoading) return;
+    
+    if (interviewStep === 'introduction' && hasSpokenIntroduction) {
+      setInterviewStep('question');
+      setAiHasFinishedSpeaking(false);
+      setHasSpokenQuestion(false); // Allow question to trigger
+      return;
+    }
+    if (interviewStep === 'question' && hasSpokenQuestion) {
+      setInterviewStep('listening');
+      setAiHasFinishedSpeaking(false);
+      setMicActive(true);
+      startRecognition();
+      return;
+    }
+    if (interviewStep === 'feedback' && hasSpokenFeedback) {
+      // Check if interview should continue or finish
+      const maxQuestions = 5; 
+      if (previousQuestions.length >= maxQuestions) {
+        setInterviewStep('finished');
+      } else {
+        setInterviewStep('question');
+        setHasSpokenQuestion(false);
+        setHasSpokenFeedback(false);
+        setUserResponse("");
+      }
+      setAiHasFinishedSpeaking(false);
+    }
+  }, [aiHasFinishedSpeaking, interviewStep, isCallActive, isSpeaking, isLoading, hasSpokenIntroduction, hasSpokenQuestion, hasSpokenFeedback, previousQuestions.length, startRecognition]);
+
+  // When transcript is finalized, move to feedback
+  useEffect(() => {
+    if (
+      isCallActive &&
+      interviewStep === 'listening' &&
+      userResponse &&
+      !isSpeaking &&
+      !isLoading
+    ) {
+      setInterviewStep('feedback');
+      setHasSpokenFeedback(false);
+    }
+  }, [isCallActive, interviewStep, userResponse, isSpeaking, isLoading]);
+
+  // Update transcript panel only after user finishes speaking
+  useEffect(() => {
+    if (interviewStep === 'feedback' && userResponse) {
+      setCurrentTranscript(`You: ${userResponse}`);
+    }
+  }, [interviewStep, userResponse]);
 
   // Toggle microphone
   const toggleMicrophone = () => {
@@ -71,14 +444,19 @@ export default function InterviewCallPage() {
     if (micActive) {
       stopRecognition();
       setMicActive(false);
-      // If we have content, submit it
+      // Only submit if liveTranscript has content
       if (liveTranscript.trim()) {
         handleSubmitResponse();
       }
     } else {
-      setLiveTranscript("");
-      setMicActive(true);
-      startRecognition();
+      if (!isListening) {
+        setLiveTranscript("");
+        setMicActive(true);
+        startRecognition();
+      } else {
+        // Already listening, do nothing
+        return;
+      }
     }
   };
 
@@ -88,16 +466,6 @@ export default function InterviewCallPage() {
     setUserResponse(liveTranscript.trim());
     setLiveTranscript("");
     setMicActive(false);
-    setShowInterviewerResponse(true);
-    // Simulate interviewer response
-    setInterviewerResponse("Thank you for your response.");
-    // Ensure AI voice is heard
-    setTimeout(() => {
-      speakText("Thank you for your response.");
-    }, 100); // Delay to ensure state is set before speaking
-    setTimeout(() => {
-      setShowInterviewerResponse(false);
-    }, 1500);
   };
 
   // Format time as MM:SS
@@ -205,7 +573,7 @@ export default function InterviewCallPage() {
                             </div>
                             <span className="text-white font-medium">AI</span>
                           </div>
-                          <p className="text-white text-sm">{interviewerResponse}</p>
+                          <p className="text-white">{interviewerResponse}</p>
                         </div>
                       </div>
                     )}
@@ -255,67 +623,65 @@ export default function InterviewCallPage() {
             {/* Right column - Transcript panel */}
             <div className="lg:col-span-1 bg-gradient-to-b from-[#0E1428]/90 to-[#1A2138]/90 border border-[#2A3A64]/50 rounded-xl shadow-lg overflow-hidden h-[600px] flex flex-col">
               <div className="p-4 border-b border-[#2A3A64]/50 bg-[#1A2138]/50 backdrop-blur-sm">
-                <h3 className="text-lg font-medium text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5]">Interview Transcript</h3>
+                <h3 className="text-lg font-medium text-white mb-4">Interview Transcript</h3>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {/* Transcript content - initially empty, only shows after AI has finished speaking */}
                 
-                {/* Live transcript for speech recognition */}
-                {isCallActive && isListening && liveTranscript && (
-                  <div className="bg-[#01CDFE]/5 p-3 rounded-lg border border-[#01CDFE]/10 animate-fade-in">
-                    <div className="flex items-center mb-2">
-                      <div className="w-6 h-6 rounded-full bg-[#1A2138] border border-[#2A3A64] flex items-center justify-center mr-2">
-                        <span className="text-[#8BA3C7] text-xs font-bold">You</span>
-                      </div>
-                      <p className="text-[#8BA3C7] text-xs">Speaking...</p>
+                {/* Loading spinner */}
+                {isLoading && (
+                  <div className="text-lg text-[#01CDFE] animate-pulse mb-4">Loading...</div>
+                )}
+                {/* Introduction */}
+                {interviewStep === 'introduction' && (
+                  <div className="text-lg text-[#01CDFE] mb-4">AI: Introduction...</div>
+                )}
+                {/* Question */}
+                {currentQuestion && (
+                  <div className="text-lg text-[#01CDFE] mb-4">{currentQuestion}</div>
+                )}
+                {/* Listening state and transcript */}
+                {interviewStep === 'listening' && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">Listening...</span>
+                      <span className="italic text-sm text-gray-400">(Speak your answer)</span>
                     </div>
-                    <p className="text-white text-sm opacity-70">{liveTranscript}</p>
+                    <div className="bg-[#01CDFE]/5 p-3 rounded-lg border border-[#01CDFE]/10 animate-fade-in">
+                      <div className="flex items-center mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#1A2138] border border-[#2A3A64] flex items-center justify-center mr-2">
+                          <span className="text-[#8BA3C7] text-xs font-bold">You</span>
+                        </div>
+                        <p className="text-[#8BA3C7] text-xs">Speaking...</p>
+                      </div>
+                      <p className="text-white min-h-[24px]">{liveTranscript || <span className="text-gray-500 italic">Start speaking to see your answer...</span>}</p>
+                    </div>
                   </div>
                 )}
-                
-                {/* Only show transcript content if call is active and AI has finished speaking */}
-                {isCallActive && aiHasFinishedSpeaking && (
-                  <>
-                    {/* Notification to click microphone button */}
-                    {!micActive && !isSpeaking && (
-                      <div className="bg-[#01CDFE]/10 p-3 rounded-lg border border-[#01CDFE]/30 mb-3 animate-pulse">
-                        <div className="flex items-center">
-                          <div className="w-6 h-6 rounded-full bg-[#01CDFE]/20 flex items-center justify-center mr-2">
-                            <Mic className="h-3 w-3 text-[#01CDFE]" />
-                          </div>
-                          <p className="text-[#01CDFE] text-sm font-medium">Click the microphone button to start speaking</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Welcome message or AI response - only shown after AI has completely finished speaking */}
-                    {interviewerResponse && (
-                      <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30 animate-fade-in">
-                        <div className="flex items-center mb-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] flex items-center justify-center mr-2">
-                            <span className="text-white text-xs font-bold">AI</span>
-                          </div>
-                          <p className="text-[#8BA3C7] text-xs">AI Interviewer</p>
-                        </div>
-                        <p className="text-white text-sm">{interviewerResponse}</p>
-                      </div>
-                    )}
-                    
-                    {/* Question and answer pairs - only shown after responses exist */}
-                    {userResponse && (
-                      <div className="space-y-3 animate-fade-in">
-                        <div className="bg-[#1A2138]/50 p-3 rounded-lg border border-[#2A3A64]/30">
-                          <div className="flex items-center mb-2">
-                            <div className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] rounded-full w-4 h-4 mr-2"></div>
-                            <p className="text-[#8BA3C7] text-xs">Your Response</p>
-                          </div>
-                          <p className="text-white text-sm">{userResponse}</p>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                {/* Feedback */}
+                {showInterviewerResponse && interviewerResponse && (
+                  <div className="bg-[#2A3A64] rounded p-3 mb-4 w-full max-w-xl text-[#01CDFE]">{interviewerResponse}</div>
                 )}
+                {/* Interview complete message */}
+                {interviewStep === 'finished' && (
+                  <div className="text-xl font-bold mt-8">Interview Complete. Thank you!</div>
+                )}
+                {/* Start Interview Button */}
+                {interviewStep === 'idle' && (
+                  <Button
+                    onClick={handleStartCall}
+                    className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white font-medium py-3 px-8 rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-3 shadow-lg text-lg"
+                  >
+                    <Phone className="h-5 w-5" />
+                    <span>Start Interview</span>
+                  </Button>
+                )}
+                
+                {/* Transcript Panel */}
+                <div className="mt-4 p-3 bg-[#1A2138] rounded-lg text-white text-base min-h-[40px]">
+                  {currentTranscript}
+                </div>
               </div>
               
               {/* Voice input status area */}
@@ -462,9 +828,7 @@ export default function InterviewCallPage() {
                         <line x1="12" y1="8" x2="12.01" y2="8"/>
                       </svg>
                     </div>
-                    <h2 className="ml-3 text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#01CDFE] to-[#9C42F5]">
-                      Interview Guidelines
-                    </h2>
+                    <h2 className="ml-3 text-lg font-bold text-white mb-4">Interview Guidelines</h2>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[#8BA3C7] text-sm">
@@ -507,13 +871,49 @@ export default function InterviewCallPage() {
               </div>
             </div>
             
-            <Button
-              onClick={handleStartCall}
-              className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white font-medium py-3 px-8 rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-3 shadow-lg text-lg"
-            >
-              <Phone className="h-5 w-5" />
-              <span>Start Interview</span>
-            </Button>
+            {/* Name Input Modal */}
+            {showNameInput && (
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+                <div className="bg-[#1A2138] p-6 rounded-xl border border-[#2A3A64] shadow-xl max-w-md w-full">
+                  <h3 className="text-xl font-bold text-white mb-4">What's your name?</h3>
+                  <p className="text-[#8BA3C7] mb-4">The AI interviewer will use your name during the introduction.</p>
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    placeholder="Enter your name"
+                    className="w-full p-3 bg-[#0E1428] border border-[#2A3A64] rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-[#01CDFE]"
+                    onKeyDown={handleNameKeyDown}
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => {
+                        setShowNameInput(false);
+                        handleStartCall();
+                      }}
+                      className="bg-[#0E1428] text-[#8BA3C7] hover:text-white mr-2"
+                    >
+                      Skip
+                    </Button>
+                    <Button
+                      onClick={handleStartCall}
+                      className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white"
+                    >
+                      Continue
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!showNameInput && (
+              <Button
+                onClick={handleStartCall}
+                className="bg-gradient-to-r from-[#01CDFE] to-[#9C42F5] text-white font-medium py-3 px-8 rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-3 shadow-lg text-lg"
+              >
+                <Phone className="h-5 w-5" />
+                <span>Start Interview</span>
+              </Button>
+            )}
           </div>
         )}
         
